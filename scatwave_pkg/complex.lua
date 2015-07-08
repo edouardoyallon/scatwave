@@ -2,8 +2,8 @@ local complex = {}
 local tools= require 'tools'
 
 function complex.unit_complex(alpha)
-   local a=torch.Tensor({{torch.cos(alpha),torch.sin(alpha)}})
-
+   local a=torch.Tensor({{torch.cos(alpha)},{torch.sin(alpha)}})
+   a:resize(1,2)
    return a
 end
 
@@ -11,7 +11,7 @@ function complex.modulus_wise(U)
    for k=1,#U do
       U[k].signal=complex.abs_value(U[k].signal)
    end
-   return U
+return U
 end
 
 function complex.abs_value(h)
@@ -23,11 +23,11 @@ function complex.abs_value(h)
    end
    local final_h=torch.pow(h,2)
    final_h=torch.sum(final_h,#dim)
-   
+
    final_h:sqrt()
-   
-   return final_h:view(final_dim)
-   
+
+   return final_h:resize(final_dim)
+
 end
 
 function complex.realize(x)
@@ -37,50 +37,28 @@ end
 
 
 function complex.multiply_complex_tensor(x,y)
-   
+
    assert(tools.is_complex(x),'The number is not complex')
-   --assert(tools.are_equal_dimension(x,y),'Dimensions of x and y differ')   
-      
-   local xr=x:select(x:dim(),1)
-   local xi=x:select(x:dim(),2)
-   local yr=y:select(y:dim(),1)
-   local yi=y:select(y:dim(),2)
+assert(tools.are_equal_dimension(x,y),'Dimensions of x and y differ')   
+
+   xr=x:select(x:dim(),1)
+   xi=x:select(x:dim(),2)
+   yr=y:select(y:dim(),1)
+   yi=y:select(y:dim(),2)
+
    
-   local z=torch.Tensor(x:size())
-   local z_real = z:select(z:dim(), 1)
-   local z_imag = z:select(z:dim(), 2)
-   
-   torch.cmul(z_real, xr, yr)
-   z_real:addcmul(-1, xi, yi)
-   
-   torch.cmul(z_imag, xr, yi)
-   z_imag:addcmul(1, xi, yr)
-   return z
+   --z=torch.Tensor(x:size()):fill(0)
+
+   zr=torch.Tensor(x:size())
+
+   zr:add(torch.cmul(xr,yr),torch.mul(torch.cmul(xi,yi),-1))
+
+   zi=torch.Tensor(x:size())
+   zi:add(torch.cmul(xr,yi),torch.cmul(xi,yr))
+--   zi=torch.cmul(xr,yi)+torch.cmul(xi,yr)
+--   gnuplot.imagesc(complex.abs_value(z))
+   local z=torch.cat(zr,zi,x:dim())
+return z
 end
-
-
-function complex.multiply_real_and_complex_tensor(x,y)
-   
-   assert(tools.is_complex(x),'First input must be complex')
-   assert(not tools.is_complex(y),'Second input must be real')
---   assert(tools.are_equal_dimension(x,y),'Dimensions of x and y differ')   
-      
-   local xr=x:select(x:dim(),1)
-   local xi=x:select(x:dim(),2)
-   local yr=y--:select(y:dim(),1)
---   local yi=y:select(y:dim(),2)
-   
-   local z=torch.Tensor(x:size())
-   local z_real = z:select(z:dim(), 1)
-   local z_imag = z:select(z:dim(), 2)
-   
-   torch.cmul(z_real, xr, yr)
-   --z_real:addcmul(-1, xi, yi)
-   
-   torch.cmul(z_imag, xi, yr)
---   z_imag:addcmul(1, xi, yr)
-   return z
-end
-
 
 return complex

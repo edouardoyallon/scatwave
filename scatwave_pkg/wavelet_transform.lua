@@ -1,5 +1,6 @@
-local complex=require 'complex'
-local conv_lib=require 'conv_lib'
+local complex = require 'complex'
+local conv_lib = require 'conv_lib'
+local my_fft = require 'my_fft'
 local filters_bank=require 'filters_bank'
 
 local wavelet_transform={}
@@ -27,7 +28,7 @@ function wavelet_transform.WT(x,filters,no_low_pass)
    
 local buff=conv_lib.pad_signal_along_k(conv_lib.pad_signal_along_k(x.signal,s_pad[1],1),s_pad[2],2)   
 
-   local xf=conv_lib.my_fft_complex(conv_lib.my_fft_real(buff,1),2)
+   local xf=my_fft.my_fft_complex(my_fft.my_fft_real(buff,1),2)
 
    A.signal=complex.realize(conv_lib.my_convolution_2d(xf,filters.phi.signal[res+1],ds))
 

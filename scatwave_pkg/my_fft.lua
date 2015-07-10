@@ -7,12 +7,12 @@ local complex = require 'complex'
 
 local my_fft={}
 
---
+-- CUDA functions for the FFT... NOT IMPLEMENTED YET! :-(
 function my_fft.my_fft_real_2D_cuda(x,k)   
    
 end
 
--- to use for real signals
+
 function my_fft.my_fft_real(x,k)   
    assert(not tools.is_complex(x),'Signal is not real')
    assert(k<=x:nDimension(),'k is bigger than the dimension')
@@ -29,7 +29,7 @@ function my_fft.my_fft_real(x,k)
    local howmany=x:nElement()/x:size(k)  
 
       
-      --input = input:contiguous() -- make sure input is contiguous
+   input = input:contiguous() -- make sure input is contiguous
    local input_data = torch.data(input)
    local input_data_cast = ffi.cast('double*', input_data)
    
@@ -65,9 +65,6 @@ function my_fft.my_fft_real(x,k)
      -- fftw.execute(plan)
    
    
-   -- le premier, -1, le deuxieme
-   
-   
    local n_el=   torch.floor((x:size(k)-1)/2)
    local n_med= 2+torch.floor((x:size(k))/2)
    
@@ -81,7 +78,7 @@ function my_fft.my_fft_real(x,k)
    return output
 end
 
--- to use for real signals
+
 function my_fft.my_fft_complex(x,k,backward) 
    
    assert(tools.is_complex(x),'Signal is not complex')
@@ -102,20 +99,8 @@ function my_fft.my_fft_complex(x,k,backward)
    local input_data = torch.data(input)
    local input_data_cast = ffi.cast(fftw_complex_cast, input_data)
    
-   --local inembed=nil
-   --local inembed_data=torch.data(inembed)
    local inembed_data_cast=n_data_cast--ffi.cast('const int*',0)
-      
-      --local istride=1
-      --for l=1,k-1 do
-      --  istride=istride*x:size(l)
-      --end 
-      
-      --local idist=1
-      --for l=k+1,x:nDimension()-1 do
-      --  idist=idist*x:size(l)
-      --end 
-      
+   
    local idist=x:nElement()/(x:stride(k)*x:size(k)) 
       
    local istride=x:stride(k)/2
@@ -140,20 +125,9 @@ function my_fft.my_fft_complex(x,k,backward)
       sign=fftw.BACKWARD
    end
    
-   
-   
-   
-   
    local flags = fftw.ESTIMATE
    
---[[--
-    
-    --
-    -- [[--local plan  = fftw.plan_dft_2d(input:size(1), input:size(2), 
-    --                            input_data_cast, output_data_cast, direction, flags)
-    
-    
-    --]]
+
    local plan  = fftw.plan_many_dft(rank,n_data_cast,howmany,input_data_cast,inembed_data_cast,
                                     istride,idist,output_data_cast,oembed_data_cast,ostride,odist,sign,flags)   
       

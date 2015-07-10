@@ -3,6 +3,7 @@ local unit_test_scatnet={}
 require 'torch'
 tester = torch.Tester()
 local complex=require 'complex'
+local my_fft=require 'my_fft'
 
 function unit_test_scatnet.complex()
    
@@ -35,6 +36,22 @@ local playing = torch.Tensor(4,5,7,2)
 
 end
 
+
+
+function unit_test_scatnet.my_fft()   
+   local playing = torch.randn(4,5,17)
+   
+for k=1,3 do
+   local ff=my_fft.my_fft_real(playing,k)
+   local iff=my_fft.my_fft_complex(ff,k,1)
+   iff=complex.realize(iff)
+      tester:asserteq(torch.squeeze(torch.sum(torch.sum(torch.sum(torch.abs(iff-playing),1),2),3)),0,'IFFT and FFT not equal')
+end
+   
+  
+   
+
+end
 
 
 tester:add(unit_test_scatnet)

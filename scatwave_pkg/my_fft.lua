@@ -62,7 +62,7 @@ function my_fft.my_fft_real(x,k)
    local plan  = fftw.plan_many_dft_r2c(rank,n_data_cast,howmany,input_data_cast,inembed_data_cast,
                                         istride,idist,output_data_cast,oembed_data_cast,ostride,odist,flags)   
 
-     -- fftw.execute(plan)
+    fftw.execute(plan)
    
    
    local n_el=   torch.floor((x:size(k)-1)/2)

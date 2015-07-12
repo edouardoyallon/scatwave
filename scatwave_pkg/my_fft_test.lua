@@ -1,11 +1,16 @@
 require 'torch'
 my_fft=require 'my_fft'
 
-x=torch.randn(3,37,13,199)
+x=torch.randn(4,4,2)
 --print(x:size())
 --print(x:stride())
-x=x:view(13,3,37,199)
+--x=x:view(4,8,2)
 --print(x:size())
 --print(x:stride())
-y=my_fft.my_fft_GURU_real(x,2)
---print(y)
+y=my_fft.my_fft_complex(x,2)
+print(x:select(3,1))
+print(x:select(3,2))
+
+z=my_fft.my_fft_complex(y,2,1)
+print(z:select(3,1))
+print(z:select(3,2))

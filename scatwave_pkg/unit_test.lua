@@ -39,18 +39,21 @@ end
 
 
 function unit_test_scatnet.my_fft()   
-   local playing = torch.randn(4,5,17)
-   
-for k=1,3 do
+   local playing = torch.randn(4,4,18,29)
+   local playing2 = torch.randn(4,5,18,29,2)
+for k=1,4 do
    local ff=my_fft.my_fft_real(playing,k)
    local iff=my_fft.my_fft_complex(ff,k,1)
-   iff=complex.realize(iff)
-      tester:asserteq(torch.squeeze(torch.sum(torch.sum(torch.sum(torch.abs(iff-playing),1),2),3)),0,'IFFT and FFT not equal')
-end
-   
-  
-   
+      iff=complex.realize(iff)
+      
+      local ff2=my_fft.my_fft_complex(playing2,k)
+      local iff2=my_fft.my_fft_complex(ff2,k,1)
+      
+tester:asserteq(torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(complex.abs_value(iff2-playing2),1),2),3),4)),0,'IFFT and FFT not equal: ')
+    tester:asserteq(torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(torch.abs(iff-playing),1),2),3),4)),0,'IFFT and FFT not equal: ')
+      
 
+end
 end
 
 

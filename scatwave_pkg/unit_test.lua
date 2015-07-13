@@ -18,7 +18,9 @@ function unit_test_scatnet.complex()
    end
 
    -- unit_complex
-   local u_a = complex.unit_complex(0.23)
+   local alpha=torch.Tensor(1)
+   alpha[1]=0.23
+   local u_a = complex.unit_complex(alpha)
    tester:asserteq(u_a:nDimension(),2,'Unit complex number dimension isn\'t 2')
    tester:asserteq(u_a:size(2),2,'Not a complex')
    
@@ -50,7 +52,7 @@ end
 
 function unit_test_scatnet.conv_lib()
    local playing=torch.Tensor({{1,2,3,4}})
-   local expected_padding=
+--   local expected_padding=
    
 end
 

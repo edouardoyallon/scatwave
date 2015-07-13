@@ -60,7 +60,7 @@ function unit_test_scatnet.conv_lib()
    tester:asserteq(torch.squeeze(torch.sum(torch.sum(torch.abs(x-y),1),2)),0,'Pad > Unpading is not the identity')
    end
    
-   -- Then we check that the down sampling is working with resolution downsampling...
+   -- Then we check that the down sampling & periodization is working with resolution downsampling...
    
     for i=16,100 do
       local x=torch.linspace(1,i,i)

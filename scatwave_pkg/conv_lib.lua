@@ -15,7 +15,6 @@ function conv_lib.my_convolution_2d(x,filt,ds)
    assert(x:size(2) % 2^ds ==0,'First dimension should be a multiple of 2^2ds')   
    local yf=complex.multiply_complex_tensor(x,filt)
    yf=conv_lib.periodize_along_k(conv_lib.periodize_along_k(yf,1,ds),2,ds)
-   
    return my_fft.my_fft_complex(my_fft.my_fft_complex(yf,1,1),2,1)
 end
 
@@ -31,39 +30,26 @@ function conv_lib.pad_signal_along_k(x,new_size_along_k,k)
       end
    end
    
-   local id_tmp=torch.cat(torch.range(1,x:size(k),1):long(),torch.range(x:size(k),1,-1):long())
+   local id_tmp = torch.cat(torch.range(1,x:size(k),1):long(),torch.range(x:size(k),1,-1):long())
    
    local idx=torch.LongTensor(new_size_along_k)
    local n_decay=torch.floor((new_size_along_k-x:size(k))/2)
    for i=1,new_size_along_k do
       idx[i]=(id_tmp[(i-n_decay-1)%id_tmp:size(1)+1])
-   end
-   
+   end   
 
-local y=torch.Tensor(fs)
-
+   local y=torch.Tensor(fs)
    y:index(x,k,idx) 
-
-
    return y
 end
 
--- un pad sihgnlas that have been padded with symmetric signals
-function conv_lib.unpad_signal_along_k(x,original_size_along_k,k,res)
-   --local n_decay=torch.floor((x:size(k)-original_size_along_k)/2)+1
-   
 
-   local n_decay=torch.floor((x:size(k)*2^res-original_size_along_k)/2^(res+1))+1
-   
+function conv_lib.unpad_signal_along_k(x,original_size_along_k,k,res) 
+   local n_decay=torch.floor((x:size(k)*2^res-original_size_along_k)/2^(res+1))+1   
    local f_size_along_k=1+torch.floor((original_size_along_k-1)/(2^res))
-
-
-local y=torch.Tensor.narrow(x,k,n_decay,f_size_along_k)
---local y=torch.Tensor.narrow(x,k,n_decay,original_size_along_k)
-
+   local y=torch.Tensor.narrow(x,k,n_decay,f_size_along_k)
    return y
 end
-
 
 
 function conv_lib.periodize_along_k(h,k,l)
@@ -86,7 +72,6 @@ function conv_lib.periodize_along_k(h,k,l)
    end
    
    local reshaped_h=torch.view(h,new_dim)
-   
    local  summed_h=torch.view(torch.sum(reshaped_h,k),final_dim)
    summed_h:mul(1/2^l)
    return summed_h

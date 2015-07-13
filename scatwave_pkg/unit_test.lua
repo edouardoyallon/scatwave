@@ -51,8 +51,53 @@ end
 
 
 function unit_test_scatnet.conv_lib()
-   local playing=torch.Tensor({{1,2,3,4}})
---   local expected_padding=
+   -- First we check that pad > unpad gives the identity
+   for i=1,100 do
+      local x=torch.randn(i,i)
+      local z=conv_lib.pad_signal_along_k(conv_lib.pad_signal_along_k(x,i+torch.ceil(i/2),1),i+torch.ceil(i/2),2)
+      local y=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(z,i,1,0),i,2,0)
+
+   tester:asserteq(torch.squeeze(torch.sum(torch.sum(torch.abs(x-y),1),2)),0,'Pad > Unpading is not the identity')
+   end
+   
+   -- Then we check that the down sampling is working with resolution downsampling...
+   
+    for i=16,100 do
+      local x=torch.linspace(1,i,i)
+      for res=1,4 do
+         local x_stamp=torch.randn(i*2^res)
+         local ts=1
+         for l=1,i do
+            for r=1,2^res do
+               x_stamp[ts] = x[l]
+               ts = ts+1
+            end
+         end
+         
+         
+         local pad_size=x_stamp:nElement()+2*2^res
+         
+
+
+         local z=conv_lib.pad_signal_along_k(x_stamp,pad_size,1)
+         
+         
+         z=my_fft.my_fft_real(z,1)
+         z=conv_lib.periodize_along_k(z,1,res)
+
+         z=my_fft.my_fft_complex(z,1,1)
+   
+         z=complex.realize(z)
+
+      local y=conv_lib.unpad_signal_along_k(z,i*2^res,1,res)
+     
+
+
+         tester:assertlt(torch.squeeze(torch.sum(torch.abs(x-y),1)),10^-10,'Issue')
+         
+      end
+   end
+
    
 end
 

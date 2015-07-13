@@ -25,10 +25,10 @@ function get_padding_size(N,M,max_ds,J)
    local sz=torch.LongTensor(J+1,2)
 
    for res=0,J do
-   local N_p=2^J*torch.ceil((N+2*J)/2^J)
+   local N_p=2^J*torch.ceil((N+2*2^J)/2^J)
    N_p=torch.max(torch.Tensor({{N_p,1}}))/2^res
 
-   local M_p=2^J*torch.ceil((M+2*J)/2^J)/2^res
+   local M_p=2^J*torch.ceil((M+2*2^J)/2^J)/2^res
       M_p=torch.max(torch.Tensor({{M_p,1}}))
       sz[res+1][1]=N_p
       sz[res+1][2]=M_p

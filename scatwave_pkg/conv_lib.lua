@@ -20,14 +20,13 @@ function conv_lib.my_convolution_2d(x,filt,ds)
 end
 
 
--- Apply a symetric padding -- assuming the signal is real
+-- Apply a symetric padding and center the signal-- assuming the signal is real!
 function conv_lib.pad_signal_along_k(x,new_size_along_k,k)
-   
    local fs=torch.LongStorage(x:nDimension())
    for l=1,x:nDimension() do
       if(l==k) then
          fs[l]=new_size_along_k
-         else
+      else
          fs[l]=x:size(l)
       end
    end
@@ -43,7 +42,8 @@ function conv_lib.pad_signal_along_k(x,new_size_along_k,k)
 
 local y=torch.Tensor(fs)
 
- y:index(x,k,idx)   
+   y:index(x,k,idx) 
+
 
    return y
 end
@@ -53,12 +53,12 @@ function conv_lib.unpad_signal_along_k(x,original_size_along_k,k,res)
    --local n_decay=torch.floor((x:size(k)-original_size_along_k)/2)+1
    
 
-   local n_decay=torch.floor((x:size(k)*2^res-original_size_along_k)/2^(res+1))
+   local n_decay=torch.floor((x:size(k)*2^res-original_size_along_k)/2^(res+1))+1
    
    local f_size_along_k=1+torch.floor((original_size_along_k-1)/(2^res))
 
 
-local y=torch.Tensor.narrow(x,k,n_decay+1,f_size_along_k)
+local y=torch.Tensor.narrow(x,k,n_decay,f_size_along_k)
 --local y=torch.Tensor.narrow(x,k,n_decay,original_size_along_k)
 
    return y
@@ -88,6 +88,7 @@ function conv_lib.periodize_along_k(h,k,l)
    local reshaped_h=torch.view(h,new_dim)
    
    local  summed_h=torch.view(torch.sum(reshaped_h,k),final_dim)
+   summed_h:mul(1/2^l)
    return summed_h
 end
 

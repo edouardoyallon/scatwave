@@ -3,6 +3,9 @@
 -- Instead, those are defined into defines.lua
 -- Note there are some tests here and there to stay cross-platform
 
+
+— According to CUDA library documentation, there are some constant that are environment specific.
+
 local ffi = require 'ffi'
 
 ffi.cdef[[

@@ -2,12 +2,12 @@ local unit_test_scatnet={}
 
 require 'torch'
 tester = torch.Tester()
-local complex=require 'complex'
-local my_fft=require 'my_fft'
+local complex = require 'complex'
+local my_fft = require 'my_fft'
+local conv_lib = require 'conv_lib'
 
 function unit_test_scatnet.complex()
-   
-local playing = torch.Tensor(4,5,7,2)
+   local playing = torch.Tensor(4,5,7,2)
    for i = 1,4 do
       for j = 1,5 do
          for k = 1, 7 do
@@ -45,6 +45,13 @@ function unit_test_scatnet.my_fft()
       tester:assertlt(torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(complex.abs_value(iff2-playing2),1),2),3),4)),10^-8,'IFFT and FFT not equal: ')
       tester:assertlt(torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(torch.abs(iff-playing),1),2),3),4)),10^-8,'IFFT and FFT not equal: ')
    end
+end
+
+
+function unit_test_scatnet.conv_lib()
+   local playing=torch.Tensor({{1,2,3,4}})
+   local expected_padding=
+   
 end
 
 tester:add(unit_test_scatnet)

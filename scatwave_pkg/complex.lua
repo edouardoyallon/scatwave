@@ -2,7 +2,7 @@ local complex = {}
 local tools= require 'tools'
 
 function complex.unit_complex(alpha)
-   local a=torch.Tensor({{torch.cos(alpha),torch.sin(alpha)}})
+   local a=torch.cat(torch.cos(alpha),torch.sin(alpha),alpha:nDimension()+1)--torch.Tensor({{torch.cos(alpha),torch.sin(alpha)}})
 
    return a
 end

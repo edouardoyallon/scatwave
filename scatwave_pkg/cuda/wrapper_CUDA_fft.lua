@@ -1,4 +1,9 @@
 local wrapper_CUDA_fft={}
+local ffi=require 'ffi'
+local fftw_complex_cast = 'fftw_complex*'
+local fftw_dim_cast='fftw_iodim[?]'
+
+local cuFFT=require 'cuda/engine_CUDA'
 
 function wrapper_CUDA_fft.my_fft_complex(x,k,backward)   
    -- Defines the 1D transform along the dimension k using the stride of the tensor. There is no need to be contiguous along this dimension.
@@ -15,7 +20,7 @@ function wrapper_CUDA_fft.my_fft_complex(x,k,backward)
       end
    end
 
-   local flags = fftw.ESTIMATE
+   local flags = cuFFT.ESTIMATE
 
    local in_data = torch.data(x)
    local in_data_cast = ffi.cast(fftw_complex_cast, in_data)
@@ -27,16 +32,16 @@ function wrapper_CUDA_fft.my_fft_complex(x,k,backward)
    
    -- iFFT if needed, no normalization is performed by FFTW3.0
    if not backward then
-      sign = fftw.FORWARD
+      sign = cuFFT.FORWARD
    else
-      sign = fftw.BACKWARD
+      sign = cuFFT.BACKWARD
    end
    
    -- The plan!
-   local plan = fftw.plan_guru_dft(1, dims, x:nDimension()-2, howmany_dims, in_data_cast, output_data_cast, sign, flags)
+   local plan = cuFFT.plan_guru_dft(1, dims, x:nDimension()-2, howmany_dims, in_data_cast, output_data_cast, sign, flags)
    
    -- If you observe a SEGFAULT, it can only come from this part.
-   fftw.execute(plan)
+   cuFFT.execute(plan)
    
     if(backward) then
       output=torch.div(output,x:size(k))   

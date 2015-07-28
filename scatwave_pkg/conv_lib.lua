@@ -10,9 +10,9 @@ local complex = require 'complex'
 
 function conv_lib.my_convolution_2d(x,filt,ds,mini_batch)
    assert(tools.is_complex(x),'The signal should be complex')
-   assert(tools.are_equal_dimension(x,filt),'The signal should be of the same size')
-   assert(x:size(1) % 2^ds ==0,'First dimension should be a multiple of 2^2ds')
-   assert(x:size(2) % 2^ds ==0,'First dimension should be a multiple of 2^2ds')   
+--   assert(tools.are_equal_dimension(x,filt),'The signal should be of the same size')
+   assert(x:size(1+mini_batch) % 2^ds ==0,'First dimension should be a multiple of 2^2ds')
+   assert(x:size(2+mini_batch) % 2^ds ==0,'First dimension should be a multiple of 2^2ds')   
    local yf=complex.multiply_complex_tensor(x,filt,mini_batch)
    yf=conv_lib.periodize_along_k(conv_lib.periodize_along_k(yf,1+mini_batch,ds),2+mini_batch,ds)
    return my_fft.my_fft_complex(my_fft.my_fft_complex(yf,1+mini_batch,1),2+mini_batch,1)

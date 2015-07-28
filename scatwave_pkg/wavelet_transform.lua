@@ -15,6 +15,7 @@ function wavelet_transform.WT(x,filters,no_low_pass)
    local V={}
    local j=x.j   
    local s_pad=filters.size[res+1]
+   local mini_batch=x.mini_batch
 
    assert(res>=0,'Resolution is not positive')
    assert(res<J,'Resolution is bigger than J?')
@@ -22,10 +23,10 @@ function wavelet_transform.WT(x,filters,no_low_pass)
    ds=torch.max(torch.Tensor({torch.floor(J)-res, 0}))
       
    local buff = x.signal  
-   local xf = my_fft.my_fft_complex(my_fft.my_fft_real(buff,1),2)
+   local xf = my_fft.my_fft_complex(my_fft.my_fft_real(buff,1+mini_batch),2+mini_batch)
 
-   A.signal = complex.realize(conv_lib.my_convolution_2d(xf,filters.phi.signal[res+1],ds))
-   A.signal = conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(A.signal,x.signal:size(1),1,ds),x.signal:size(2),2,ds)
+   A.signal = complex.realize(conv_lib.my_convolution_2d(xf,filters.phi.signal[res+1],ds,mini_batch))
+   A.signal = conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(A.signal,x.signal:size(1),1+mini_batch,ds),x.signal:size(2),2+mini_batch,ds)
    A.j = filters.phi.j
    A.res = res+ds
    
@@ -35,10 +36,11 @@ function wavelet_transform.WT(x,filters,no_low_pass)
          if(filters.psi[i].j >= j+1) then
             ds = torch.max(torch.Tensor({torch.floor(filters.psi[i].j)-res,0}))
             V[k] = {}
-            V[k].signal = conv_lib.my_convolution_2d(xf,filters.psi[i].signal[res+1],ds)
+            V[k].signal = conv_lib.my_convolution_2d(xf,filters.psi[i].signal[res+1],ds,mini_batch)
             V[k].j = filters.psi[i].j
             V[k].theta = filters.psi[i].theta
             V[k].res = res+ds
+            V[k].mini_batch=mini_batch
             k=k+1
          end         
       end

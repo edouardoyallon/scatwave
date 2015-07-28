@@ -5,13 +5,13 @@ local conv_lib=require 'conv_lib'
 local network = torch.class('network')
 
 
-function network:__init(M,N,J)
-   --local ScatteringNetwork={J=5,M=32,N=32} -- J scale, M width, N height, K number of angles
+function network:__init(M,N,J,dimension_mini_batch)
+   --local ScatteringNetwork={J=5,M=32,N=32,dimension_mini_batch=1} -- J scale, M width, N height, K number of angles, dimension_mini_batch, the dimension after which the scattering will be batched. For instance, this means that you can batch a set of 128 color images stored in a tensor of size 128x3x256x256 by setting dimension_mini_batch=3
    
-   --setmetatable(self.__index,ScatteringNetwork)
    self.M=M
    self.N=N
    self.J=J or 2
+   self.dimension_mini_batch=dimension_mini_batch or 1
    self.filters=filters_bank.morlet_filters_bank_2D(self.N,self.M,self.J)
    
 end
@@ -21,7 +21,6 @@ function network:get_filters()
 end
 
 function network:WT(image_input)
-   --local x=complex.unit_complex(10)
    local x={}
    x.signal=image_input
    x.res=0
@@ -32,8 +31,7 @@ end
 
 
 function network:scat(image_input)
-   --local x=complex.unit_complex(10)
-   local x={}
+   local mini_batch=self.dimension_mini_batch-1
    local S={}
    local U={}
    S[1]={}
@@ -50,9 +48,10 @@ function network:scat(image_input)
    U[1][1]={}
    local res=0
    local s_pad=self.filters.size[res+1]
-   U[1][1].signal=conv_lib.pad_signal_along_k(conv_lib.pad_signal_along_k(image_input, s_pad[1], 1), s_pad[2], 2) 
+   U[1][1].signal=conv_lib.pad_signal_along_k(conv_lib.pad_signal_along_k(image_input, s_pad[1], 1+mini_batch), s_pad[2], 2+mini_batch) 
    U[1][1].res=0
    U[1][1].j=-1000 -- encode the fact to compute wavelet of scale 0
+   U[1][1].mini_batch=mini_batch
    
    out=wavelet_transform.WT(U[1][1],self.filters)
    U[2]=complex.modulus_wise(out.V)

@@ -36,7 +36,7 @@ function complex.realize(x)
 end
 
 
-function complex.multiply_complex_tensor(x,y)
+function complex.multiply_complex_tensor(x,y,mini_batch)
    
    assert(tools.is_complex(x),'The number is not complex')
    assert(tools.are_equal_dimension(x,y),'Dimensions of x and y differ')   

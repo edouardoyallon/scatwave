@@ -42,7 +42,7 @@ function complex.multiply_complex_tensor(x,y,mini_batch_x)
 
       local strides=torch.LongStorage(x:nDimension())
       for l=1,x:nDimension() do
-      if(l<mini_batch_x) then
+      if(l<=mini_batch_x) then
          strides[l]=0
       else
          strides[l]=x:stride(l)

@@ -39,10 +39,10 @@ function wrapper_CUDA_fft.my_fft_complex(x,k,backward)
 
    -- The plan!
 --local plan = cuFFT.plan_guru_dft(1, dims, x:nDimension()-2, howmany_dims, in_data_cast, output_data_cast, sign, flags)
- local plan = cuFFT.plan_dft_2d(32,32, in_data_cast, output_data_cast, sign,flags)
-
+ local plan = cuFFT.plan_dft_2d(x:size(1),x:size(2), in_data_cast, output_data_cast, sign,flags)
    -- If you observe a SEGFAULT, it can only come from this part.
 cuFFT.execute(plan)
+  cuFFT.destroy_plan(plan)   
 
    if(backward) then
       output=torch.div(output,x:size(k))   

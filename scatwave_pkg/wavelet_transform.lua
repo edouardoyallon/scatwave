@@ -21,7 +21,7 @@ function wavelet_transform.WT(x,filters,no_low_pass)
    assert(x.j<J,'Scale is bigger than J?')
    ds=torch.max(torch.Tensor({torch.floor(J)-res, 0}))
       
-   local buff = conv_lib.pad_signal_along_k(conv_lib.pad_signal_along_k(x.signal, s_pad[1], 1), s_pad[2], 2)   
+   local buff = x.signal  
    local xf = my_fft.my_fft_complex(my_fft.my_fft_real(buff,1),2)
 
    A.signal = complex.realize(conv_lib.my_convolution_2d(xf,filters.phi.signal[res+1],ds))
@@ -36,7 +36,6 @@ function wavelet_transform.WT(x,filters,no_low_pass)
             ds = torch.max(torch.Tensor({torch.floor(filters.psi[i].j)-res,0}))
             V[k] = {}
             V[k].signal = conv_lib.my_convolution_2d(xf,filters.psi[i].signal[res+1],ds)
-            V[k].signal = conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(V[k].signal,x.signal:size(1),1,ds),x.signal:size(2),2,ds)
             V[k].j = filters.psi[i].j
             V[k].theta = filters.psi[i].theta
             V[k].res = res+ds

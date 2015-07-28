@@ -1,7 +1,7 @@
 local complex = require 'complex'
 local filters_bank = require 'filters_bank'
 local wavelet_transform = require 'wavelet_transform'
-
+local conv_lib=require 'conv_lib'
 local network = torch.class('network')
 
 
@@ -43,9 +43,14 @@ function network:scat(image_input)
    U[1]={}
    U[2]={}
    U[3]={}
+   
+   
+   
 
    U[1][1]={}
-   U[1][1].signal=image_input
+   local res=0
+   local s_pad=self.filters.size[res+1]
+   U[1][1].signal=conv_lib.pad_signal_along_k(conv_lib.pad_signal_along_k(image_input, s_pad[1], 1), s_pad[2], 2) 
    U[1][1].res=0
    U[1][1].j=-1000 -- encode the fact to compute wavelet of scale 0
    

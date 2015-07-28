@@ -53,16 +53,21 @@ function network:scat(image_input)
    U[1][1].j=-1000 -- encode the fact to compute wavelet of scale 0
    U[1][1].mini_batch=mini_batch
    
+
    out=wavelet_transform.WT(U[1][1],self.filters)
    U[2]=complex.modulus_wise(out.V)
 
 
    S[1][1]=out.A
+   local ds=self.J
+S[1][1].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[1][1].signal,image_input:size(1+mini_batch),1+mini_batch,ds),image_input:size(2+mini_batch),2+mini_batch,ds)
    local k=1
    for i=1,#U[2] do
 
       out=wavelet_transform.WT(U[2][i],self.filters)
       S[2][i]=out.A
+      S[2][i].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[2][i].signal,image_input:size(1+mini_batch),1+mini_batch,ds),image_input:size(2+mini_batch),2+mini_batch,ds)
+
       for l=1,#out.V do
 
       U[3][k]=out.V[l]
@@ -80,6 +85,8 @@ function network:scat(image_input)
    for i=1,#U[3] do
       out=wavelet_transform.WT(U[3][i],self.filters,1)
       S[3][i]=out.A
+      
+S[3][i].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[3][i].signal,image_input:size(1+mini_batch),1+mini_batch,ds),image_input:size(2+mini_batch),2+mini_batch,ds)
      -- k=k+1
    end
       

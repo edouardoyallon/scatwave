@@ -26,7 +26,8 @@ function wavelet_transform.WT(x,filters,no_low_pass)
    local xf = my_fft.my_fft_complex(my_fft.my_fft_real(buff,1+mini_batch),2+mini_batch)
 
    A.signal = complex.realize(conv_lib.my_convolution_2d(xf,filters.phi.signal[res+1],ds,mini_batch))
-   A.signal = conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(A.signal,x.signal:size(1),1+mini_batch,ds),x.signal:size(2),2+mini_batch,ds)
+ 
+
    A.j = filters.phi.j
    A.res = res+ds
    

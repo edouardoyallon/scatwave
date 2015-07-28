@@ -1,7 +1,8 @@
 local ffi = require 'ffi'
 local cuFFT = {}
 
-local ok, cuFFT_lib = pcall(function () return ffi.load('cufft') end)
+
+local ok, cuFFT_lib = pcall(function () return ffi.load('cufftw') end)
 
 if(not ok) then
    error('library cufft not found...')
@@ -47,7 +48,16 @@ extern fftwf_plan fftwf_plan_guru_dft_r2c(int rank, const fftwf_iodim *dims,
                                             int batch_rank, const fftwf_iodim *batch_dims,
                                             float *in, fftwf_complex *out, 
                                             unsigned flags);
-void fftw_execute(const fftw_plan plan);
+extern void fftw_execute(const fftw_plan plan);
+extern void fftwf_execute(const fftwf_plan plan);
+
+extern fftwf_plan fftwf_plan_dft_2d(int n0,
+                                    int n1, 
+                                    fftwf_complex *in,
+                                    fftwf_complex *out, 
+                                    int sign, 
+                                    unsigned flags);
+
 ]]
 
 -- defines constant 
@@ -68,10 +78,11 @@ local function register(luafuncname, funcname)
    end
 end
 
-register('execute','fftw_execute')
+register('execute','fftwf_execute')
 --register('plan_guru_dft_r2c_f','fftwf_plan_guru_dft_r2c')
---register('plan_guru_dft_r2c_f','fftwf_plan_guru_dft_r2c')
-register('plan_guru_dft','fftw_plan_guru_dft')
+register('plan_guru_dft_r2c','fftwf_plan_guru_dft_r2c')
+register('plan_guru_dft','fftwf_plan_guru_dft')
+register('plan_dft_2d','fftwf_plan_dft_2d')
 
 
 return cuFFT

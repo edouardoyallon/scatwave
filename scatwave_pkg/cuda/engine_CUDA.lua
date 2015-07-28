@@ -58,7 +58,17 @@ extern fftwf_plan fftwf_plan_dft_2d(int n0,
                                     int sign, 
                                     unsigned flags);
 
-extern void fftwf_destroy_plan(fftwf_plan plan);   
+extern void fftwf_destroy_plan(fftwf_plan plan);  
+
+extern fftwf_plan fftwf_plan_many_dft(int rank,
+                                        const int *n,
+                                        int batch,
+                                        fftwf_complex *in,
+                                        const int *inembed, int istride, int idist,
+                                        fftwf_complex *out,
+                                        const int *onembed, int ostride, int odist,
+                                        int sign, unsigned flags);
+ 
 
 ]]
 
@@ -86,6 +96,6 @@ register('plan_guru_dft_r2c','fftwf_plan_guru_dft_r2c')
 register('plan_guru_dft','fftwf_plan_guru_dft')
 register('plan_dft_2d','fftwf_plan_dft_2d')
 register('destroy_plan','fftwf_destroy_plan')
-
+register('plan_many_dft','fftwf_plan_many_dft')
 
 return cuFFT

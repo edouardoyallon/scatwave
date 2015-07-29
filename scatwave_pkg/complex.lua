@@ -5,7 +5,7 @@ local tools= require 'tools'
 
 function complex.unit_complex(alpha)
    assert(torch.isTensor(alpha),'You can only input a tensor to unit_complex')
-   return torch.cat(torch.cos(alpha),torch.sin(alpha),alpha:nDimension()+1)
+   return torch.cat(alpha:cos(),alpha:sin(),alpha:nDimension()+1)
 end
 
 
@@ -36,7 +36,7 @@ function complex.realize(x)
 end
 
 
-function complex.multiply_complex_tensor(x,y,mini_batch_x)
+function complex.multiply_complex_tensor(x,y,mini_batch_x,scat)
 
    assert(tools.is_complex(x),'The number is not complex')
 
@@ -47,8 +47,10 @@ function complex.multiply_complex_tensor(x,y,mini_batch_x)
       else
          strides[l]=x:stride(l)
       end
-      end
-      y_=torch.Tensor(y:storage(),y:storageOffset(),x:size(),strides) -- hint, set the stride to 0 when you wanna minibatch...
+   end
+
+
+      y_=scat.myTensor(y:storage(),y:storageOffset(),x:size(),strides) -- hint, set the stride to 0 when you wanna minibatch...
    
    assert(tools.are_equal_dimension(x,y_),'Dimensions of x and y differ')      
 
@@ -58,7 +60,7 @@ function complex.multiply_complex_tensor(x,y,mini_batch_x)
    local yr=y_:select(y_:dim(),1)
    local yi=y_:select(y_:dim(),2)
    
-   local z=torch.Tensor(x:size()):fill(0)   
+   local z=scat.myTensor(x:size()):fill(0)   
    local z_real = z:select(z:dim(), 1)
    local z_imag = z:select(z:dim(), 2)
       
@@ -72,7 +74,7 @@ function complex.multiply_complex_tensor(x,y,mini_batch_x)
 end
 
 
-function complex.multiply_real_and_complex_tensor(x,y)
+function complex.multiply_real_and_complex_tensor(x,y,scat)
    
    assert(tools.is_complex(x),'First input must be complex')
    assert(not tools.is_complex(y),'Second input must be real')
@@ -81,7 +83,7 @@ function complex.multiply_real_and_complex_tensor(x,y)
    local xi=x:select(x:dim(),2)
    local yr=y
    
-   local z=torch.Tensor(x:size()):fill(0)
+   local z=scat.myTensor(x:size()):fill(0)
    local z_real = z:select(z:dim(), 1)
    local z_imag = z:select(z:dim(), 2)
    
@@ -91,7 +93,7 @@ function complex.multiply_real_and_complex_tensor(x,y)
 end
 
 
-function complex.multiply_complex_number_and_real_tensor(x,y)
+function complex.multiply_complex_number_and_real_tensor(x,y,scat)
    
    assert(tools.is_complex(x),'First input must be complex')
    assert(not tools.is_complex(y),'Second input must be real')
@@ -105,7 +107,7 @@ function complex.multiply_complex_number_and_real_tensor(x,y)
    end
    fs[y:nDimension()+1]=2
    
-   local z=torch.Tensor(fs):fill(0)
+   local z=scat.myTensor(fs):fill(0)
    local z_real = z:select(z:dim(), 1)
    local z_imag = z:select(z:dim(), 2)
 

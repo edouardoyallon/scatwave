@@ -8,19 +8,19 @@ local tools=require 'tools'
 
 local complex = require 'complex'
 
-function conv_lib.my_convolution_2d(x,filt,ds,mini_batch,my_fft)
+function conv_lib.my_convolution_2d(x,filt,ds,mini_batch,my_fft,scat)
    assert(tools.is_complex(x),'The signal should be complex')
 --   assert(tools.are_equal_dimension(x,filt),'The signal should be of the same size')
    assert(x:size(1+mini_batch) % 2^ds ==0,'First dimension should be a multiple of 2^2ds')
    assert(x:size(2+mini_batch) % 2^ds ==0,'First dimension should be a multiple of 2^2ds')   
-   local yf=complex.multiply_complex_tensor(x,filt,mini_batch)
+   local yf=complex.multiply_complex_tensor(x,filt,mini_batch,scat)
    yf=conv_lib.periodize_along_k(conv_lib.periodize_along_k(yf,1+mini_batch,ds),2+mini_batch,ds)
-   return my_fft.my_fft_complex(my_fft.my_fft_complex(yf,1+mini_batch,1),2+mini_batch,1)
+   return my_fft.my_2D_fft_complex_batch(yf,1+mini_batch,1)
 end
 
 
 -- Apply a symetric padding and center the signal-- assuming the signal is real!
-function conv_lib.pad_signal_along_k(x,new_size_along_k,k)
+function conv_lib.pad_signal_along_k(x,new_size_along_k,k,scat)
    local fs=torch.LongStorage(x:nDimension())
    for l=1,x:nDimension() do
       if(l==k) then
@@ -38,16 +38,16 @@ function conv_lib.pad_signal_along_k(x,new_size_along_k,k)
       idx[i]=(id_tmp[(i-n_decay-1)%id_tmp:size(1)+1])
    end   
 
-   local y=torch.Tensor(fs)
+   local y=scat.myTensor(fs)
    y:index(x,k,idx) 
    return y
 end
 
 
-function conv_lib.unpad_signal_along_k(x,original_size_along_k,k,res) 
+function conv_lib.unpad_signal_along_k(x,original_size_along_k,k,res,scat) 
    local n_decay=torch.floor((x:size(k)*2^res-original_size_along_k)/2^(res+1))+1   
    local f_size_along_k=1+torch.floor((original_size_along_k-1)/(2^res))
-   local y=torch.Tensor.narrow(x,k,n_decay,f_size_along_k)
+   local y=scat.myTensor.narrow(x,k,n_decay,f_size_along_k)
    return y
 end
 

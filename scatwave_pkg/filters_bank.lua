@@ -37,7 +37,7 @@ function get_padding_size(N,M,max_ds,J)
 end
 
 
-function filters_bank.morlet_filters_bank_2D(N,M,J)
+function filters_bank.morlet_filters_bank_2D(N,M,J,scat)
    local filters={}
    local i=1
    filters.size=get_padding_size(N,M,J,J) -- min padding should be a power of 2
@@ -48,7 +48,7 @@ function filters_bank.morlet_filters_bank_2D(N,M,J)
       for theta=1,8 do
          filters.psi[i]={}
          filters.psi[i].signal = {}
-         filters.psi[i].signal[1] = morlet_2d(filters.size[1][1], filters.size[1][2], 0.8*2^j, 0.5, 3/4*3.1415/2^j, theta*3.1415/8, 0, 1)
+         filters.psi[i].signal[1] = morlet_2d(filters.size[1][1], filters.size[1][2], 0.8*2^j, 0.5, 3/4*3.1415/2^j, theta*3.1415/8, 0, 1,scat)
          filters.psi[i].signal[1] = my_fft.my_fft_complex(my_fft.my_fft_complex(filters.psi[i].signal[1], 1), 2)           
          
          for res=2,res_MAX do
@@ -61,7 +61,7 @@ function filters_bank.morlet_filters_bank_2D(N,M,J)
    end
    filters.phi={}
    filters.phi.signal={}
-   filters.phi.signal[1]=gabor_2d(filters.size[1][1], filters.size[1][2], 0.8*2^(J-1), 1, 0, 0, 0, 1)
+   filters.phi.signal[1]=gabor_2d(filters.size[1][1], filters.size[1][2], 0.8*2^(J-1), 1, 0, 0, 0, 1,scat)
    filters.phi.signal[1]=my_fft.my_fft_complex(my_fft.my_fft_complex(filters.phi.signal[1],1),2)    
       
    for res=2,res_MAX do
@@ -81,21 +81,21 @@ function meshgrid(x,y) -- identical to MATLAB
 end
 
 
-function gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift)  
-   local wv=torch.Tensor(N,M,2)  
-   local R=torch.Tensor({{torch.cos(theta),-torch.sin(theta)},{torch.sin(theta),torch.cos(theta)}}) -- conversion to the axis..
-   local R_inv=torch.Tensor({{torch.cos(theta),torch.sin(theta)},{-torch.sin(theta),torch.cos(theta)}})
-   local g_modulus=torch.Tensor(M,N)
-   local g_phase=torch.Tensor(M,N,2)
-   local A=torch.Tensor({{1,0},{0,slant^2}})
+function gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift,scat)  
+   local wv=scat.myTensor(N,M,2)  
+   local R=scat.myTensor({{torch.cos(theta),-torch.sin(theta)},{torch.sin(theta),torch.cos(theta)}}) -- conversion to the axis..
+   local R_inv=scat.myTensor({{torch.cos(theta),torch.sin(theta)},{-torch.sin(theta),torch.cos(theta)}})
+   local g_modulus=scat.myTensor(M,N)
+   local g_phase=scat.myTensor(M,N,2)
+   local A=scat.myTensor({{1,0},{0,slant^2}})
    local tmp=R*A*R_inv/(2*sigma^2)
    local x=torch.linspace(offset+1-(M/2)-1,offset+M-(M/2)-1,M)
    local y=torch.linspace(offset+1-(N/2)-1,offset+N-(N/2)-1,N)
    
    -- Shift the variable by half of their lenght
    if(fft_shift) then      
-      local x_tmp=torch.Tensor(M)
-      local y_tmp=torch.Tensor(N)
+      local x_tmp=scat.myTensor(M)
+      local y_tmp=scat.myTensor(N)
       for i=1,M do
          i_=(i-(M/2)-1)%M+1
          x_tmp[i_]=x[i]
@@ -112,17 +112,18 @@ function gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift)
    g_modulus = torch.exp(-(torch.cmul(xx,xx)*tmp[1][1]+torch.cmul(xx,yy)*tmp[2][1]+torch.cmul(yy,xx)*tmp[1][2]+torch.cmul(yy,yy)*tmp[2][2])) -- this is simply the result exp(-x^T*tmp*x)
    g_phase = xx*xi*torch.cos(theta)+yy*xi*torch.sin(theta)
    g_phase = complex.unit_complex(g_phase)
-   wv = complex.multiply_real_and_complex_tensor(g_phase,g_modulus)
+
+   wv = complex.multiply_real_and_complex_tensor(g_phase,g_modulus,scat)
    return wv
 end
 
 
-function morlet_2d(M,N,sigma,slant,xi,theta,offset,fft_shift)
-   local wv=gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift)  
-   local g_modulus=complex.realize(gabor_2d(M,N,sigma,slant,0,theta,offset,fft_shift))  
+function morlet_2d(M,N,sigma,slant,xi,theta,offset,fft_shift,scat)
+   local wv=gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift,scat)  
+   local g_modulus=complex.realize(gabor_2d(M,N,sigma,slant,0,theta,offset,fft_shift,scat))  
    local K=torch.squeeze(torch.sum(torch.sum(wv,1),2))/(torch.squeeze(torch.sum(torch.sum(g_modulus,1),2)))
 
-   local mor=wv-complex.multiply_complex_number_and_real_tensor(K,g_modulus)
+   local mor=wv-complex.multiply_complex_number_and_real_tensor(K,g_modulus,scat)
    local    norm_factor=1/(2*3.1415*sigma^2/slant)
    mor:mul(norm_factor)
    return mor

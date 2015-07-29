@@ -1,8 +1,9 @@
 local ffi=require 'ffi'
 local fftw = require 'fftw3' -- this library has been implemented by soumith, we could avoid using it.
-local fftw_complex_cast = 'fftw_complex*'
+local fftw_complex_cast = 'fftwf_complex*'
 local fftw_dim_cast='fftw_iodim[?]'
 local tools=require 'tools'
+fftw=fftw.float
 
 local complex = require 'complex'
 
@@ -41,7 +42,7 @@ function my_fft.my_fft_real(x,k)
    ss[x:nDimension()+1]=1
 
    local in_data = torch.data(x)
-   local in_data_cast = ffi.cast('double*', in_data)
+   local in_data_cast = ffi.cast('float*', in_data)
       
    local output = torch.Tensor(fs,ss):zero()
    local output_data = torch.data(output);

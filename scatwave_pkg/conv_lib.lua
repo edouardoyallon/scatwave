@@ -1,6 +1,6 @@
 local conv_lib={}
 local tools=require 'tools'
-local ffi=require 'ffi'
+--local ffi=require 'ffi'
 local fftw = require 'fftw3'
 local fftw_complex_cast = 'fftw_complex*'
 local tools=require 'tools'

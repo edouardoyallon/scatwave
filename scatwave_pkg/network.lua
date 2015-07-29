@@ -13,7 +13,47 @@ function network:__init(M,N,J,dimension_mini_batch)
    self.J=J or 2
    self.dimension_mini_batch=dimension_mini_batch or 1
    self.filters=filters_bank.morlet_filters_bank_2D(self.N,self.M,self.J)
+   self.fft=require 'my_fft'
+   self.type='float'
+end
+
+
+function network:cuda()
+   -- Should have a similar call to cuda() function in cunn   
+   self.type='cuda'   
    
+   -- First, we CUDArize the filters
+   -- Phi   
+   for l=1,#self.filters.phi.signal do
+       self.filters.phi.signal[l]:cuda()
+   end
+   -- Psi
+   for k=1,#self.filters.psi do
+      for l=1,#self.filters.psi[k].signal do
+         self.filters.psi[k].signal[l]:cuda()
+      end
+   end
+   
+   self.fft = require 'my_fft_cuda'
+end
+      
+function network:float()
+     -- Should have a similar call to cuda() function in cunn   
+   self.type='float'   
+   
+   -- First, we CUDArize the filters
+   -- Phi   
+   for l=1,#self.filters.phi.signal do
+       self.filters.phi.signal[l]:float()
+   end
+   -- Psi
+   for k=1,#self.filters.psi do
+      for l=1,#self.filters.psi[k].signal do
+         self.filters.psi[k].signal[l]:float()
+      end
+   end
+
+   self.fft = require 'my_fft'
 end
 
 function network:get_filters()

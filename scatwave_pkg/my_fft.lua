@@ -10,7 +10,7 @@ local my_fft={}
 
 -- CUDA functions are missing!
 
-function my_fft.my_fft_real(x,k)   
+function my_fft.my_fft_real(x,k)
    -- Defines the 1D transform along the dimension k using the stride of the tensor. There is no need to be contiguous along this dimension.
    local dims=ffi.new(fftw_dim_cast,1)
    dims[0] = {n=x:size(k),is=x:stride(k),os=x:stride(k)}

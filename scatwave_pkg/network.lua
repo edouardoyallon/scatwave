@@ -14,8 +14,9 @@ function network:__init(M,N,J,dimension_mini_batch)
    self.type='torch.FloatTensor'
    self.myTensor=torch.FloatTensor
    self.dimension_mini_batch=dimension_mini_batch or 1
+   self.fft=require 'wrapper_fft'   
    self.filters=filters_bank.morlet_filters_bank_2D(self.N,self.M,self.J,self)
-   self.fft=require 'wrapper_fft'
+
 
 
 end

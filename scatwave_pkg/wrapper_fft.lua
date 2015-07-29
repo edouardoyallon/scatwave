@@ -48,7 +48,7 @@ function wrapper_fft.my_2D_fft_complex_batch(x,k,backward)
    --[[--------------------------------------]]
 
    if(backward) then
-      output=torch.div(output,x:size(k)*x:size(k))   
+      output:div(x:size(k)*x:size(k+1))   
    end
    return output
 end
@@ -83,7 +83,7 @@ function wrapper_fft.my_2D_fft_complex(x,backward)
    --[[--------------------------------------]]
 
    if(backward) then
-      output=torch.div(output,x:size(k))   
+      output:div(x:size(1)*x:size(2))   
    end
       return output
 end

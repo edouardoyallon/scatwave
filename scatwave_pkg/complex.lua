@@ -36,25 +36,38 @@ function complex.realize(x)
 end
 
 
-function complex.multiply_complex_tensor(x,y)
-   
+function complex.multiply_complex_tensor(x,y,mini_batch_x)
+
    assert(tools.is_complex(x),'The number is not complex')
-   assert(tools.are_equal_dimension(x,y),'Dimensions of x and y differ')   
-      
+
+      local strides=torch.LongStorage(x:nDimension())
+      for l=1,x:nDimension() do
+      if(l<=mini_batch_x) then
+         strides[l]=0
+      else
+         strides[l]=x:stride(l)
+      end
+      end
+      y_=torch.Tensor(y:storage(),y:storageOffset(),x:size(),strides) -- hint, set the stride to 0 when you wanna minibatch...
+   
+   assert(tools.are_equal_dimension(x,y_),'Dimensions of x and y differ')      
+
+
    local xr=x:select(x:dim(),1)
    local xi=x:select(x:dim(),2)
-   local yr=y:select(y:dim(),1)
-   local yi=y:select(y:dim(),2)
+   local yr=y_:select(y_:dim(),1)
+   local yi=y_:select(y_:dim(),2)
    
-   local z=torch.Tensor(x:size()):fill(0)
+   local z=torch.Tensor(x:size()):fill(0)   
    local z_real = z:select(z:dim(), 1)
    local z_imag = z:select(z:dim(), 2)
+      
    
-   torch.cmul(z_real, xr, yr)
-   z_real:addcmul(-1, xi, yi)
-   
-   torch.cmul(z_imag, xr, yi)
-   z_imag:addcmul(1, xi, yr)
+         torch.cmul(z_real, xr, yr)
+         z_real:addcmul(-1, xi, yi)   
+         torch.cmul(z_imag, xr, yi)
+         z_imag:addcmul(1, xi, yr)      
+
    return z
 end
 

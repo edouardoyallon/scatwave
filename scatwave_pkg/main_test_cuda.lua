@@ -11,11 +11,11 @@ ScatWave = require 'init'
 
 
 sys.tic()
-y=ScatWave.network.new(32,32,2) -- constructor to build a network
+y=ScatWave.network.new(32,32,2,2) -- constructor to build a network
    
-y:cuda()  -- make the network using CUDA
+--y:cuda()  -- make the network using CUDA
    
- for images of size
+-- for images of size
 print(sys.toc())   -- 32 by 32 invariant up to 2^2
 
 
@@ -23,7 +23,7 @@ print(sys.toc())   -- 32 by 32 invariant up to 2^2
 x=image.lena()
 x=image.scale(x,32,32)
 
-x=x:cuda()
+--x=x:cuda()
 
 -- Let's try to get the scattering coefficients
    sys.tic()
@@ -34,5 +34,5 @@ end
 
 
 -- Printing
- print(z)
+-- print(z)
 

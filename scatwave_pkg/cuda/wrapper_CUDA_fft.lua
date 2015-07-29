@@ -6,7 +6,7 @@ local fftw_dim_cast='fftw_iodim[?]'
 local cuFFT=require 'cuda/engine_CUDA'
 
 
-function wrapper_CUDA_fft.my_fft_complex_batch(x,k,backward)   
+function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward)   
    -- Defines the 1D transform along the dimension k using the stride of the tensor. There is no need to be contiguous along this dimension.
    local dims = ffi.new('int[?]',2)
    dims[0] = x:size(k)--{n=x:size(k),is=x:stride(k)/2,os=x:stride(k)/2}      
@@ -56,7 +56,7 @@ end
 
 
 
-function wrapper_CUDA_fft.my_fft_complex(x,backward)   
+function wrapper_CUDA_fft.my_2D_fft_complex(x,backward)   
    local flags = cuFFT.ESTIMATE
 
    local in_data = torch.data(x)
@@ -87,7 +87,7 @@ function wrapper_CUDA_fft.my_fft_complex(x,backward)
 end
 
 
-function wrapper_CUDA_fft.my_fft_real(x,k)   
+function wrapper_CUDA_fft.my_2D_fft_real(x,k)   
    -- Defines the 1D transform along the dimension k using the stride of the tensor. There is no need to be contiguous along this dimension.
    local dims=ffi.new(fftw_dim_cast,1)
    dims[0] = {n=x:size(k),is=x:stride(k),os=x:stride(k)}

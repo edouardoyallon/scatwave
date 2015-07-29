@@ -1,14 +1,14 @@
 local conv_lib={}
 local tools=require 'tools'
 --local ffi=require 'ffi'
-local fftw = require 'fftw3'
-local fftw_complex_cast = 'fftw_complex*'
+--local fftw = require 'fftw3'
+--local fftw_complex_cast = 'fftw_complex*'
 local tools=require 'tools'
-local my_fft = require 'my_fft'
+--local my_fft = require 'my_fft'
 
 local complex = require 'complex'
 
-function conv_lib.my_convolution_2d(x,filt,ds,mini_batch)
+function conv_lib.my_convolution_2d(x,filt,ds,mini_batch,my_fft)
    assert(tools.is_complex(x),'The signal should be complex')
 --   assert(tools.are_equal_dimension(x,filt),'The signal should be of the same size')
    assert(x:size(1+mini_batch) % 2^ds ==0,'First dimension should be a multiple of 2^2ds')

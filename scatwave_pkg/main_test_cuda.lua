@@ -6,11 +6,11 @@ require 'sys'
 
 
 
---x=image.lena()
---x=image.scale(x,32,32)
+x=image.lena()
+x=image.scale(x,32,32)
 
-x=torch.randn(128,3,32,32)
---x=x:float()
+x=torch.randn(10,32,32)
+x=x:float()
 x=x:cuda()
 -- Let's launch ScatWave!
 ScatWave = require 'init'
@@ -18,7 +18,7 @@ ScatWave = require 'init'
 
 
 sys.tic()
-y=ScatWave.network.new(32,32,2,3) -- constructor to build a network
+y=ScatWave.network.new(32,32,4,2) -- constructor to build a network
 --   y:float()
 y:cuda()  -- make the network using CUDA
    
@@ -31,8 +31,9 @@ print(sys.toc())   -- 32 by 32 invariant up to 2^2
    sys.tic()
 for i=1,1 do
    z=y:scat(x)
-   
 end
+   --cutorch.synchronize()
+
    print(sys.toc())
 
 

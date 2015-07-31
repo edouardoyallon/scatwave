@@ -3,10 +3,10 @@ require 'gnuplot'
 require 'image'
 require 'env'
 require 'sys'
+complex=require 'complex'
 
 
 -- Let's launch ScatWave!
-torch.setdefaulttensortype('torch.FloatTensor')
 ScatWave = require 'init'
 
 
@@ -24,12 +24,12 @@ x=x:float()
 
 -- Let's try to get the scattering coefficients
    sys.tic()
-for i=1,4 do
+for i=1,2 do
    z=y:scat(x)
 end
-   print(sys.toc()/4)
+   print(sys.toc()/2)
 
-
+f=y:get_filters()
 -- Printing
 -- print(z)
 

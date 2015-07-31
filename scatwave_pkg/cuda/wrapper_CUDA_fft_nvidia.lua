@@ -2,66 +2,63 @@ local wrapper_CUDA_fft={}
 local ffi=require 'ffi'
 local fftwf_complex_cast = 'fftwf_complex*'
 
-local cuFFT=require 'cuda/engine_CUDA'
+local cuFFT=require 'cuda/engine_CUDA_nvidia'
 
 
 function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward)   
    -- Defines a 2D convolution that batches until the k-th dimension
-   local dims = ffi.new('int[?]',2)
-   dims[0] = x:size(k)
-   dims[1] = x:size(k+1)
-
+   local n = ffi.new('int[?]',2)
+   n[0] = x:size(k)
+   n[1] = x:size(k+1)
    local batch=x:nElement()/(2*x:size(k)*x:size(k+1))
-
-   local flags = cuFFT.ESTIMATE
-
+   local idist = x:size(k)*x:size(k+1)
+   local istride = 1
+      
+   local ostride = istride
+   local odist = idist
+   local rank = 2
+   local type = cuFFT.C2C
+   -- The plan!  
+   --[[-- SEGFAULT CAN COME FROM THOSE LINES ]]
+   
+   local plan_cast = ffi.new('int[?]',1)
+        
+   result=cuFFT.planMany(plan_cast, rank,n, n, istride, idist, n, ostride, odist, type, batch)
+   cutorch.synchronize()
+   print(plan_cast[0])
+   print(result)
+cuFFT.destroy(plan_cast[0])         
+--[[--   print(result)
    local in_data = torch.data(x)
    local in_data_cast = ffi.cast(fftwf_complex_cast, in_data)
    
-   local output = torch.CudaTensor(x:size(),x:stride()):zero()
+
    local output_data = torch.data(output);
-   local output_data_cast = ffi.cast(fftwf_complex_cast, output_data)
-   
-   -- iFFT if needed, keep in mind that no normalization is performed by FFTW3.0
+   local output_data_cast = ffi.cast(fftwf_complex_cast, output_data)                  
+                  
+                  
+      -- iFFT if needed, keep in mind that no normalization is performed by FFTW3.0
    if not backward then
       sign = cuFFT.FORWARD
    else
       sign = cuFFT.BACKWARD
-   end
-   
-   local idist=x:size(k)*x:size(k+1)
-   local istride=1
-      
-   local ostride=istride
-   local odist=idist
-
-   -- The plan!  
-   --[[-- SEGFAULT CAN COME FROM THOSE LINES ]]
---   cutorch.synchronize()      
-   if(LOL==nil) then
-      LOL=0
-end
-      if(LOL<1000) then
-LOL=LOL+1
-
-
---      print(batch)
-      print(in_data_cast)
-      print(output_data_cast)
-      print(dims)
-
-      local plan = cuFFT.plan_many_dft(2, dims, batch,in_data_cast, dims, istride,idist,output_data_cast, dims,ostride,odist,sign, flags)
- 	cutorch.synchronize()      
-print(plan)
-   cuFFT.destroy_plan(plan)         
+   end            ]]--
+                  
+                  
+                  
+                  
+                  
+--        cutorch.synchronize()      
 --print(plan)
-         end
+--   cuFFT.destroy_plan(plan)         
+--print(plan)
+
    
 
 --cutorch.synchronize()   
 --   cuFFT.execute(plan)
 
-
+   local output = torch.CudaTensor(x:size(),x:stride()):zero()
    --[[--------------------------------------]]
 
    if(backward) then

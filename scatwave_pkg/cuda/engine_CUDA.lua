@@ -68,7 +68,7 @@ extern fftwf_plan fftwf_plan_many_dft(int rank,
                                         fftwf_complex *out,
                                         const int *onembed, int ostride, int odist,
                                         int sign, unsigned flags);
- fftwf_plan fftwf_plan_many_dft_r2c(int rank,
+extern fftwf_plan fftwf_plan_many_dft_r2c(int rank,
                                             const int *n,
                                             int batch,
                                             float *in,
@@ -85,7 +85,7 @@ extern fftwf_plan fftwf_plan_many_dft(int rank,
 -- defines constant 
 cuFFT.FORWARD  = -1
 cuFFT.BACKWARD =  1
-cuFFT.ESTIMATE = 1
+cuFFT.ESTIMATE = 3
 
 -- registers function in a "soumith" style. It checks that function exists before adding it to the list!
 local function register(luafuncname, funcname)

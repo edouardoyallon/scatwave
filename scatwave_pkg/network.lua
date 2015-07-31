@@ -16,9 +16,6 @@ function network:__init(M,N,J,dimension_mini_batch)
    self.dimension_mini_batch=dimension_mini_batch or 1
    self.fft=require 'wrapper_fft'   
    self.filters=filters_bank.morlet_filters_bank_2D(self.N,self.M,self.J,self)
-
-
-
 end
 
 
@@ -39,7 +36,7 @@ function network:cuda()
       end
    end
 
-   self.fft = require 'cuda/wrapper_CUDA_fft'
+   self.fft = require 'cuda/wrapper_CUDA_fft_nvidia'
 end
 
 function network:float()
@@ -98,8 +95,9 @@ function network:scat(image_input)
    U[1][1].j=-1000 -- encode the fact to compute wavelet of scale 0
       U[1][1].mini_batch=mini_batch
    
-   
+
    out=wavelet_transform.WT(U[1][1],self)
+
    U[2]=complex.modulus_wise(out.V)
    
    
@@ -113,23 +111,29 @@ function network:scat(image_input)
       S[2][i]=out.A
       S[2][i].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[2][i].signal,image_input:size(1+mini_batch),1+mini_batch,ds,self),image_input:size(2+mini_batch),2+mini_batch,ds,self)
       
+
+
       for l=1,#out.V do
          U[3][k]=out.V[l]
          U[3][k].signal=complex.abs_value(U[3][k].signal)
+
          k=k+1
       end
    end
    
    k=1
+      
    for i=1,#U[3] do
+
       out=wavelet_transform.WT(U[3][i],self,1)
+
       S[3][i]=out.A
       
       S[3][i].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[3][i].signal,image_input:size(1+mini_batch),1+mini_batch,ds,self),image_input:size(2+mini_batch),2+mini_batch,ds,self)
       -- k=k+1
    end
    
-   
+
    return S
 end
 return network

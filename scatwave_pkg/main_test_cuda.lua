@@ -7,7 +7,7 @@ require 'sys'
 
 
 x=image.lena()
-x=image.scale(x,32,32)
+--x=image.scale(x,256,256)
 
 x=torch.randn(10,32,32)
 x=x:float()
@@ -18,7 +18,7 @@ ScatWave = require 'init'
 
 
 sys.tic()
-y=ScatWave.network.new(32,32,4,2) -- constructor to build a network
+y=ScatWave.network.new(32,32,2,2) -- constructor to build a network
 --   y:float()
 y:cuda()  -- make the network using CUDA
    
@@ -29,8 +29,12 @@ print(sys.toc())   -- 32 by 32 invariant up to 2^2
 
 -- Let's try to get the scattering coefficients
    sys.tic()
-for i=1,1 do
+for i=1,2 do
+
    z=y:scat(x)
+
+--collectgarbage()   
+
 end
    --cutorch.synchronize()
 

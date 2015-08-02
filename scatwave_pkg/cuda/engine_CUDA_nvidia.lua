@@ -2,9 +2,10 @@ local ffi = require 'ffi'
 local cuFFT = {}
 
 
-local ok, cuFFT_lib = pcall(function () return ffi.load('cufft') end)
+local ok, err = pcall(function () cuFFT.C=ffi.load('cufft') end)
 
 if(not ok) then
+   print(err)
    error('library cufft not found...')
 end
 
@@ -47,6 +48,10 @@ extern cufftResult cufftExecR2C(cufftHandle plan,
 extern cufftResult cufftDestroy(cufftHandle plan);
 
 extern cufftResult cufftGetVersion(int *version);
+
+extern cufftResult cufftPlan2d(cufftHandle *plan, 
+                                 int nx, int ny,
+                                 cufftType type);
 ]]
 
 -- defines constant 
@@ -77,21 +82,5 @@ cuFFT.LICENSE_ERROR = 0x0F
 
 
 
-
--- registers function in a "soumith" style. It checks that function exists before adding it to the list!
-local function register(luafuncname, funcname)
-   local symexists, msg = pcall(function()
-                              local sym = cuFFT_lib[funcname]
-                           end)
-   if symexists then
-      cuFFT[luafuncname] = cuFFT_lib[funcname]
-   else 
-
-      error(string.format('%s of the library cuFFT not found!',funcname))
-   end
-end
-register('execC2C','cufftExecC2C')
-register('destroy','cufftDestroy')
-register('planMany','cufftPlanMany')
 
 return cuFFT

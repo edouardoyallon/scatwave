@@ -5,7 +5,7 @@ local fftwf_complex_cast = 'fftwf_complex*'
 local cuFFT=require 'cuda/engine_CUDA_nvidia'
 
 
-function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward)   
+function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward,plan_idx)   
    -- Defines a 2D convolution that batches until the k-th dimension
    local n = ffi.new('int[2]',{})
    n[0] = x:size(k)
@@ -20,7 +20,7 @@ function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward)
    local type = cuFFT.C2C
    
    -- The plan!  
-   local plan_cast = ffi.new('int[1]',{})
+--   local plan_cast = ffi.new('int[1]',{})
 
 
 
@@ -39,12 +39,12 @@ function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward)
    else
       sign = cuFFT.INVERSE
    end           
-   --[[-- SEGFAULT CAN COME FROM THOSE LINES ]]
-   sys.tic()
-   cuFFT.C['cufftPlanMany'](plan_cast, rank,n, n, istride, idist, n, ostride, odist, type, batch)
-   t=t+sys.toc()
-   cuFFT.C['cufftExecC2C'](plan_cast[0],in_data_cast,output_data_cast,sign)              
-   cuFFT.C['cufftDestroy'](plan_cast[0])      
+--[[-- SEGFAULT CAN COME FROM THOSE LINES ]]
+   --   cuFFT.C['cufftPlanMany'](plan_cast, rank,n, n, istride, idist, n, ostride, odist, type, batch)
+   plan_cast=plan_idx
+   print(plan_cast)
+   cuFFT.C['cufftExecC2C'](plan_cast,in_data_cast,output_data_cast,sign)              
+--   cuFFT.C['cufftDestroy'](plan_cast[0])      
    --[[--------------------------------------]]
 
    if(backward) then
@@ -53,6 +53,35 @@ function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward)
    return output
 end
 
+function wrapper_CUDA_fft.LUT(res,x,k)
+
+   local lookuptable=ffi.new('int[?]',res:nElement())
+   local batch=x:nElement()/(x:size(k)*x:size(k+1))   
+for i=1,res:nElement() do
+     local n = ffi.new('int[2]',{})
+   n[0] = res[i]
+   n[1] = res[i]
+
+   local idist = x:size(k)*x:size(k+1)
+   local istride = 1
+      
+   local ostride = istride
+   local odist = idist
+   local rank = 2
+   local type = cuFFT.C2C
+   
+   -- The plan!   
+   cuFFT.C['cufftPlanMany'](lookuptable+i-1, rank,n, n, istride, idist, n, ostride, odist, type, batch)
+   end
+   local function destroy_plans(p)
+      for i=1,res:nElement() do
+         cuFFT.C['cufftDestroy'](p[i-1])            
+      end
+   end
+
+   ffi.gc(lookuptable,destroy_plans)
+return lookuptable
+end
 
 
 
@@ -98,7 +127,7 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
     local n = ffi.new('int[2]',{})
    n[0] = x:size(k)
    n[1] = x:size(k+1)
-   local batch=x:nElement()/(2*x:size(k)*x:size(k+1))
+   local batch=x:nElement()/(x:size(k)*x:size(k+1))
    local idist = x:size(k)*x:size(k+1)
    local istride = 1
       
@@ -106,9 +135,7 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
    local odist = idist
    local rank = 2
    local type = cuFFT.R2C
-   
-   -- The plan!  
-   local plan_cast = ffi.new('int[1]',{})
+  
 
    local in_data = torch.data(x)
    local in_data_cast = ffi.cast('float*', in_data)
@@ -141,6 +168,7 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
 
 --[[-- SEGFAULT CAN COME FROM THOSE LINES ]]
    cuFFT.C['cufftPlanMany'](plan_cast, rank,n, n, istride, idist, n, ostride, odist, type, batch)
+   print(plan_cast[0])
    cuFFT.C['cufftExecR2C'](plan_cast[0],in_data_cast,output_data_cast)
    cuFFT.C['cufftDestroy'](plan_cast[0])      
    --[[--------------------------------------]]

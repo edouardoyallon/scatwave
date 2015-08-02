@@ -19,7 +19,7 @@ function network:__init(M,N,J,dimension_mini_batch)
 end
 
 
-function network:cuda()
+function network:cuda(x)
    -- Should have a similar call to cuda() function in cunn   
    self.type='torch.CudaTensor'
    self.myTensor=torch.CudaTensor   
@@ -37,6 +37,7 @@ function network:cuda()
    end
 
    self.fft = require 'cuda/wrapper_CUDA_fft_nvidia'
+   self.fft.lookuptable=self.fft.LUT(self.filters.size[{{},1}],x,self.dimension_mini_batch)
 end
 
 function network:float()

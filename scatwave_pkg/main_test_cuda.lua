@@ -20,7 +20,7 @@ t=0
 sys.tic()
 y=ScatWave.network.new(32,32,2,3) -- constructor to build a network
 --   y:float()
-y:cuda()  -- make the network using CUDA
+y:cuda(x)  -- make the network using CUDA optimizing it for x
    
 -- for images of size
 print(sys.toc())   -- 32 by 32 invariant up to 2^2

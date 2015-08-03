@@ -5,9 +5,19 @@ local fftwf_complex_cast = 'fftwf_complex*'
 local cuFFT=require 'cuda/engine_CUDA_nvidia'
 
 
-function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward,plan_idx)   
-   -- Defines a 2D convolution that batches until the k-th dimension
-   local n = ffi.new('int[2]',{})
+wrapper_CUDA_fft.LUT={}
+
+
+local function destroy_plan(p)
+   cuFFT.C['cufftDestroy'](p[0])      
+
+end
+
+
+
+function wrapper_CUDA_fft.cache(x,k,type)
+   local plan_cast = ffi.new('int[1]',{})
+     local n = ffi.new('int[2]',{})
    n[0] = x:size(k)
    n[1] = x:size(k+1)
    local batch=x:nElement()/(2*x:size(k)*x:size(k+1))
@@ -17,12 +27,20 @@ function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward,plan_idx)
    local ostride = istride
    local odist = idist
    local rank = 2
-   local type = cuFFT.C2C
    
+   cuFFT.C['cufftPlanMany'](plan_cast, rank,n, n, istride, idist, n, ostride, odist, type, batch)   
+   ffi.gc(plan_cast,destroy_plan)
+return plan_cast
+end
+
+
+
+function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward)   
+   -- Defines a 2D convolution that batches until the k-th dimension
+
+   local type = cuFFT.C2C
+   local batch=x:nElement()/(2*x:size(k)*x:size(k+1))
    -- The plan!  
---   local plan_cast = ffi.new('int[1]',{})
-
-
 
    local in_data = torch.data(x)
    local in_data_cast = ffi.cast(fftwf_complex_cast, in_data)
@@ -38,49 +56,30 @@ function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward,plan_idx)
       sign = cuFFT.FORWARD
    else
       sign = cuFFT.INVERSE
-   end           
+   end          
+   
+
 --[[-- SEGFAULT CAN COME FROM THOSE LINES ]]
-   --   cuFFT.C['cufftPlanMany'](plan_cast, rank,n, n, istride, idist, n, ostride, odist, type, batch)
-   plan_cast=plan_idx
-   print(plan_cast)
+   if(wrapper_CUDA_fft.LUT[batch]==nil) then
+      wrapper_CUDA_fft.LUT[batch]={}
+      end
+   if(wrapper_CUDA_fft.LUT[batch][x:size(k)]==nil) then
+      wrapper_CUDA_fft.LUT[batch][x:size(k)]={}
+   end
+   if(wrapper_CUDA_fft.LUT[batch][x:size(k)][type]==nil) then
+      wrapper_CUDA_fft.LUT[batch][x:size(k)][type]=wrapper_CUDA_fft.cache(x,k,type)
+   end
+
+   local plan_cast=wrapper_CUDA_fft.LUT[batch][x:size(k)][type][0]
+
    cuFFT.C['cufftExecC2C'](plan_cast,in_data_cast,output_data_cast,sign)              
---   cuFFT.C['cufftDestroy'](plan_cast[0])      
+
    --[[--------------------------------------]]
 
    if(backward) then
       output=torch.div(output,x:size(k))   
    end
    return output
-end
-
-function wrapper_CUDA_fft.LUT(res,x,k)
-
-   local lookuptable=ffi.new('int[?]',res:nElement())
-   local batch=x:nElement()/(x:size(k)*x:size(k+1))   
-for i=1,res:nElement() do
-     local n = ffi.new('int[2]',{})
-   n[0] = res[i]
-   n[1] = res[i]
-
-   local idist = x:size(k)*x:size(k+1)
-   local istride = 1
-      
-   local ostride = istride
-   local odist = idist
-   local rank = 2
-   local type = cuFFT.C2C
-   
-   -- The plan!   
-   cuFFT.C['cufftPlanMany'](lookuptable+i-1, rank,n, n, istride, idist, n, ostride, odist, type, batch)
-   end
-   local function destroy_plans(p)
-      for i=1,res:nElement() do
-         cuFFT.C['cufftDestroy'](p[i-1])            
-      end
-   end
-
-   ffi.gc(lookuptable,destroy_plans)
-return lookuptable
 end
 
 
@@ -124,22 +123,13 @@ end
 
 function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)   
    -- Defines a 2D convolution that batches until the k-th dimension
-    local n = ffi.new('int[2]',{})
-   n[0] = x:size(k)
-   n[1] = x:size(k+1)
+
    local batch=x:nElement()/(x:size(k)*x:size(k+1))
-   local idist = x:size(k)*x:size(k+1)
-   local istride = 1
-      
-   local ostride = istride
-   local odist = idist
-   local rank = 2
    local type = cuFFT.R2C
   
-
    local in_data = torch.data(x)
    local in_data_cast = ffi.cast('float*', in_data)
-   
+     sys.tic()
    local fs = torch.LongStorage(x:nDimension()+1)
    for l = 1, x:nDimension() do
       fs[l] = x:size(l)
@@ -151,10 +141,15 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
       ss[l] = x:stride(l)*2
    end
    ss[x:nDimension()+1]=1
+   
+      cutorch.synchronize()
+            t=t+sys.toc()      
 
    local output = torch.CudaTensor(fs,ss):zero()
    local output_data = torch.data(output);
    local output_data_cast = ffi.cast(fftwf_complex_cast, output_data)
+   
+
    
    -- iFFT if needed, keep in mind that no normalization is performed by FFTW3.0
    if not backward then
@@ -162,15 +157,24 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
    else
       sign = cuFFT.INVERSE
    end
-   
+
       -- The plan!
-      local plan_cast = ffi.new('int[1]',{})
+--      local plan_cast = ffi.new('int[1]',{})
 
 --[[-- SEGFAULT CAN COME FROM THOSE LINES ]]
-   cuFFT.C['cufftPlanMany'](plan_cast, rank,n, n, istride, idist, n, ostride, odist, type, batch)
-   print(plan_cast[0])
-   cuFFT.C['cufftExecR2C'](plan_cast[0],in_data_cast,output_data_cast)
-   cuFFT.C['cufftDestroy'](plan_cast[0])      
+ if(wrapper_CUDA_fft.LUT[batch]==nil) then
+      wrapper_CUDA_fft.LUT[batch]={}
+      end
+   if(wrapper_CUDA_fft.LUT[batch][x:size(k)]==nil) then
+      wrapper_CUDA_fft.LUT[batch][x:size(k)]={}
+   end
+   if(wrapper_CUDA_fft.LUT[batch][x:size(k)][type]==nil) then
+      wrapper_CUDA_fft.LUT[batch][x:size(k)][type]=wrapper_CUDA_fft.cache(x,k,type)
+   end
+   local plan_cast=wrapper_CUDA_fft.LUT[batch][x:size(k)][type][0]
+
+   cuFFT.C['cufftExecR2C'](plan_cast,in_data_cast,output_data_cast)
+
    --[[--------------------------------------]]
    
    
@@ -184,7 +188,9 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
       output:narrow(k,n_med,n_el):indexCopy(k,torch.range(n_el,1,-1):long(),output:narrow(k,2,n_el))
    
       output:narrow(k,torch.ceil(x:size(k)/2)+1,torch.floor(x:size(k)/2)):narrow(output:nDimension(),2,1):mul(-1)
-     end
+   end
+
+
    return output
 end   
    

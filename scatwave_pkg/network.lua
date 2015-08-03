@@ -19,7 +19,7 @@ function network:__init(M,N,J,dimension_mini_batch)
 end
 
 
-function network:cuda(x)
+function network:cuda()
    -- Should have a similar call to cuda() function in cunn   
    self.type='torch.CudaTensor'
    self.myTensor=torch.CudaTensor   
@@ -37,7 +37,6 @@ function network:cuda(x)
    end
 
    self.fft = require 'cuda/wrapper_CUDA_fft_nvidia'
-   self.fft.lookuptable=self.fft.LUT(self.filters.size[{{},1}],x,self.dimension_mini_batch)
 end
 
 function network:float()
@@ -107,8 +106,9 @@ function network:scat(image_input)
    S[1][1].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[1][1].signal,image_input:size(1+mini_batch),1+mini_batch,ds,self),image_input:size(2+mini_batch),2+mini_batch,ds,self)
    local k=1
    for i=1,#U[2] do
-      
-      out=wavelet_transform.WT(U[2][i],self)
+
+         out=wavelet_transform.WT(U[2][i],self)
+
       S[2][i]=out.A
       S[2][i].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[2][i].signal,image_input:size(1+mini_batch),1+mini_batch,ds,self),image_input:size(2+mini_batch),2+mini_batch,ds,self)
       
@@ -116,8 +116,9 @@ function network:scat(image_input)
 
       for l=1,#out.V do
          U[3][k]=out.V[l]
-         U[3][k].signal=complex.abs_value(U[3][k].signal)
 
+         U[3][k].signal=complex.abs_value(U[3][k].signal)
+ 
          k=k+1
       end
    end

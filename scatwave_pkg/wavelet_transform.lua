@@ -24,21 +24,21 @@ function wavelet_transform.WT(x,scat,no_low_pass)
    assert(x.j<J,'Scale is bigger than J?')
    ds=torch.max(torch.Tensor({torch.floor(J)-res, 0}))
 
-   local xf = my_fft.my_2D_fft_real_batch(x.signal,1+mini_batch,nil)
+   local xf = my_fft.my_2D_fft_real_batch(x.signal,1+mini_batch)
 
-   A.signal = complex.realize(conv_lib.my_convolution_2d(xf,filters.phi.signal,ds,mini_batch,my_fft,scat,res))
- 
+   A.signal = complex.realize(conv_lib.my_convolution_2d(xf,filters.phi.signal[res+1],ds,mini_batch,my_fft,scat))
+
 
    A.j = filters.phi.j
    A.res = res+ds
-   
+
    if(not no_low_pass) then
       local k=1
       for i=1,#filters.psi do
          if(filters.psi[i].j >= j+1) then
             ds = torch.max(torch.Tensor({torch.floor(filters.psi[i].j)-res,0}))
             V[k] = {}
-            V[k].signal = conv_lib.my_convolution_2d(xf,filters.psi[i].signal,ds,mini_batch,my_fft,scat,res)
+            V[k].signal = conv_lib.my_convolution_2d(xf,filters.psi[i].signal[res+1],ds,mini_batch,my_fft,scat)
             V[k].j = filters.psi[i].j
             V[k].theta = filters.psi[i].theta
             V[k].res = res+ds
@@ -47,7 +47,7 @@ function wavelet_transform.WT(x,scat,no_low_pass)
          end         
       end
    end
-   
+     
    local out={}
    out.A = A
    out.V = V

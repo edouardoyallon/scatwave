@@ -19,29 +19,15 @@ t=0
 
 sys.tic()
 y=ScatWave.network.new(32,32,2,3) -- constructor to build a network
---   y:float()
 y:cuda()  -- make the network using CUDA optimizing it for x
-   
--- for images of size
-print(sys.toc())   -- 32 by 32 invariant up to 2^2
-
-
 
 -- Let's try to get the scattering coefficients
---  sys.tic()
 for i=1,10 do
-
    z=y:scat(x)
-if(i%2==0) then
+   if(i%2==0) then
       collectgarbage()   
+   end
 end
 
-end
-   cutorch.synchronize()
-print(t/10)
---   print(sys.toc()/10)
-
-
--- Printing
--- print(z)
+print(sys.toc()/10)
 

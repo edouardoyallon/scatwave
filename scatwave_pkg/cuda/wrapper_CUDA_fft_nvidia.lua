@@ -129,23 +129,23 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
   
    local in_data = torch.data(x)
    local in_data_cast = ffi.cast('float*', in_data)
-     sys.tic()
+
    local fs = torch.LongStorage(x:nDimension()+1)
    for l = 1, x:nDimension() do
       fs[l] = x:size(l)
    end
+   
+
    fs[x:nDimension()+1] = 2
  
-   local ss = torch.LongStorage(x:nDimension()+1)
-   for l = 1, x:nDimension() do
-      ss[l] = x:stride(l)*2
-   end
-   ss[x:nDimension()+1]=1
-   
-      cutorch.synchronize()
-            t=t+sys.toc()      
+  -- local ss = torch.LongStorage(x:nDimension()+1)
+--   for l = 1, x:nDimension() do
+--      ss[l] = x:stride(l)*2
+--   end
+--   ss[x:nDimension()+1]=1
 
-   local output = torch.CudaTensor(fs,ss):zero()
+      --   local output = torch.CudaTensor(fs,ss):zero()
+   local output = torch.CudaTensor(fs)
    local output_data = torch.data(output);
    local output_data_cast = ffi.cast(fftwf_complex_cast, output_data)
    

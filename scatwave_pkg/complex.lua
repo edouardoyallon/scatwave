@@ -32,29 +32,24 @@ end
 
 function complex.realize(x)
    assert(tools.is_complex(x),'The number is not complex')
+
    return ((x:select(x:dim(),1)):clone())
 end
 
-
 function complex.multiply_complex_tensor(x,y,mini_batch_x,scat)
-
    assert(tools.is_complex(x),'The number is not complex')
-
-      local strides=torch.LongStorage(x:nDimension())
-      for l=1,x:nDimension() do
+   
+   local strides=torch.LongStorage(x:nDimension())
+   for l=1,x:nDimension() do
       if(l<=mini_batch_x) then
          strides[l]=0
       else
          strides[l]=x:stride(l)
       end
    end
-
-
-      y_=scat.myTensor(y:storage(),y:storageOffset(),x:size(),strides) -- hint, set the stride to 0 when you wanna minibatch...
+   y_=scat.myTensor(y:storage(),y:storageOffset(),x:size(),strides) -- hint, set the stride to 0 when you wanna minibatch...
    
    assert(tools.are_equal_dimension(x,y_),'Dimensions of x and y differ')      
-
-
    local xr=x:select(x:dim(),1)
    local xi=x:select(x:dim(),2)
    local yr=y_:select(y_:dim(),1)
@@ -65,10 +60,10 @@ function complex.multiply_complex_tensor(x,y,mini_batch_x,scat)
    local z_imag = z:select(z:dim(), 2)
       
    
-         torch.cmul(z_real, xr, yr)
-         z_real:addcmul(-1, xi, yi)   
-         torch.cmul(z_imag, xr, yi)
-         z_imag:addcmul(1, xi, yr)      
+   torch.cmul(z_real, xr, yr)
+   z_real:addcmul(-1, xi, yi)   
+   torch.cmul(z_imag, xr, yi)
+   z_imag:addcmul(1, xi, yr)      
 
    return z
 end
@@ -112,7 +107,8 @@ function complex.multiply_complex_number_and_real_tensor(x,y,scat)
    local z_imag = z:select(z:dim(), 2)
 
    z_real:add(xr,y) 
-   z_imag:add(xi,y)
+      z_imag:add(xi,y)
+
    return z
 end
 

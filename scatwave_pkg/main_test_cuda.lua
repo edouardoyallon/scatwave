@@ -9,7 +9,7 @@ x=torch.randn(128,3,32,32)
 x=x:cuda()
 
 -- Let's launch ScatWave!
-ScatWave = require 'init'
+ScatWave = require 'scatwave'
 
 
 sys.tic()

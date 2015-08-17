@@ -7,7 +7,7 @@ complex=require 'complex'
 
 
 -- Let's launch ScatWave!
-ScatWave = require 'init'
+ScatWave = require 'scatwave'
 
 
 sys.tic()

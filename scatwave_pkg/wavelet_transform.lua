@@ -8,6 +8,7 @@ local wavelet_transform={}
 function wavelet_transform.WT(x,scat,no_low_pass)
    local filters=scat.filters
    local my_fft=scat.fft
+   local myTensor=scat.myTensor
    local res=x.res
    local out={}
    local res=x.res
@@ -26,7 +27,7 @@ function wavelet_transform.WT(x,scat,no_low_pass)
 
    local xf = my_fft.my_2D_fft_real_batch(x.signal,1+mini_batch)
 
-   A.signal = complex.realize(conv_lib.my_convolution_2d(xf,filters.phi.signal[res+1],ds,mini_batch,my_fft,scat))
+   A.signal = complex.realize(conv_lib.my_convolution_2d(xf,filters.phi.signal[res+1],ds,mini_batch,my_fft,myTensor))
 
 
    A.j = filters.phi.j
@@ -38,7 +39,7 @@ function wavelet_transform.WT(x,scat,no_low_pass)
          if(filters.psi[i].j >= j+1) then
             ds = torch.max(torch.Tensor({torch.floor(filters.psi[i].j)-res,0}))
             V[k] = {}
-            V[k].signal = conv_lib.my_convolution_2d(xf,filters.psi[i].signal[res+1],ds,mini_batch,my_fft,scat)
+            V[k].signal = conv_lib.my_convolution_2d(xf,filters.psi[i].signal[res+1],ds,mini_batch,my_fft,myTensor)
             V[k].j = filters.psi[i].j
             V[k].theta = filters.psi[i].theta
             V[k].res = res+ds

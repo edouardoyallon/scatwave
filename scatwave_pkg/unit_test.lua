@@ -1,9 +1,11 @@
 local unit_test_scatnet={}
 
-require 'torch'
+require 'cutorch'
+
 tester = torch.Tester()
 local complex = require 'complex'
 local my_fft = require 'wrapper_fft'
+local my_fft_CUDA = require 'cuda/wrapper_CUDA_fft_nvidia'
 local conv_lib = require 'conv_lib'
 local TOL=1e-3
 function unit_test_scatnet.complex()
@@ -55,6 +57,33 @@ function unit_test_scatnet.my_fft()
    tester:assertlt(res,TOL,'complex IFFT and FFT not equal: ')
    tester:assertlt(torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(torch.abs(iff-playing),1),2),3),4)),TOL,'batched IFFT and FFT not equal: ')
 tester:assertlt(torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(complex.abs_value(ff3-ff),1),2),3),4)),TOL,'batched FFT real and complex FFT of a real signal not equal: ')
+
+end
+
+function unit_test_scatnet.my_fft_CUDA()   
+   local playing_c = torch.randn(1,1,4,4):cuda()
+   local playing = playing_c:float()
+   
+   local playing2_c = torch.randn(1,1,27,4,2):cuda()
+   local playing2 = playing2_c:float()
+
+   -- We assert iFFT is working on both real FFT and complex one.
+   local ff = my_fft.my_2D_fft_real_batch(playing,3)
+   local ff_c = my_fft_CUDA.my_2D_fft_real_batch(playing_c,3)
+   
+   local ff2_c = my_fft_CUDA.my_2D_fft_complex_batch(playing2_c,3)
+   local ff2 = my_fft.my_2D_fft_complex_batch(playing2,3)
+   
+   ff_c=ff_c:float()
+   ff2_c=ff2_c:float()
+   print(torch.squeeze(ff:narrow(5,1,1)))
+   print(torch.squeeze(ff_c:narrow(5,1,1)))
+   local res=torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(complex.abs_value(ff-ff_c),1),2),3),4))
+   local res2=torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(complex.abs_value(ff2_c-ff2_c),1),2),3),4))
+   
+   tester:assertlt(res,TOL,'real CUDA FFT and non CUDA are not equal')
+   tester:assertlt(res2,TOL,'complex CUDA FFT are not equal')
+
 
 end
 

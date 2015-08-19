@@ -20,7 +20,12 @@ function wrapper_CUDA_fft.cache(x,k,type)
    local n = ffi.new('int[2]',{})
    n[0] = x:size(k)
    n[1] = x:size(k+1)
-   local batch=x:nElement()/(2*x:size(k)*x:size(k+1))
+   local batch
+   if(type==cuFFT.R2C) then
+      batch=x:nElement()/(x:size(k)*x:size(k+1))
+   else
+      batch=x:nElement()/(2*x:size(k)*x:size(k+1))
+   end
    local idist = x:size(k)*x:size(k+1)
    local istride = 1
       
@@ -145,7 +150,7 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
 --   ss[x:nDimension()+1]=1
 
       --   local output = torch.CudaTensor(fs,ss):zero()
-   local output = torch.CudaTensor(fs)
+   local output = torch.CudaTensor(fs):zero()
    local output_data = torch.data(output);
    local output_data_cast = ffi.cast(fftwf_complex_cast, output_data)
    
@@ -158,13 +163,12 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
       sign = cuFFT.INVERSE
    end
 
-      -- The plan!
---      local plan_cast = ffi.new('int[1]',{})
+   -- The plan!
 
---[[-- SEGFAULT CAN COME FROM THOSE LINES ]]
- if(wrapper_CUDA_fft.LUT[batch]==nil) then
+   --[[-- SEGFAULT CAN COME FROM THOSE LINES ]]
+   if(wrapper_CUDA_fft.LUT[batch]==nil) then
       wrapper_CUDA_fft.LUT[batch]={}
-      end
+   end
    if(wrapper_CUDA_fft.LUT[batch][x:size(k)]==nil) then
       wrapper_CUDA_fft.LUT[batch][x:size(k)]={}
    end
@@ -173,22 +177,34 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
    end
    local plan_cast=wrapper_CUDA_fft.LUT[batch][x:size(k)][type][0]
 
-   cuFFT.C['cufftExecR2C'](plan_cast,in_data_cast,output_data_cast)
 
+   cuFFT.C['cufftExecR2C'](plan_cast,in_data_cast,output_data_cast)
    --[[--------------------------------------]]
    
    
-  -- k=k+2 -- We get the half of the coefficients that were not computed by cuFFT - SHOULD WE REMOVE INDEED THOSE LINES? NEED TO BE CHECKED!
+   
+   
 
-   local n_el=torch.floor((x:size(k)-1)/2)
-   local n_med=2+torch.floor((x:size(k))/2)
+   local n_el=x:size(k)-1
+   local n_med=2
    
-   -- If there is something to fill in
-  if(n_el>0) then
-      output:narrow(k,n_med,n_el):indexCopy(k,torch.range(n_el,1,-1):long(),output:narrow(k,2,n_el))
+   local n_el_kp1=torch.floor((x:size(k+1)-1)/2)
+   local n_med_kp1=2+torch.floor((x:size(k+1))/2)  
    
-      output:narrow(k,torch.ceil(x:size(k)/2)+1,torch.floor(x:size(k)/2)):narrow(output:nDimension(),2,1):mul(-1)
+   -- If there is something to fill in ? IS IT ??
+   if(n_el>0) then
+      local subs_idx=output:narrow(k+1,n_med_kp1,n_el_kp1)
+      subs_idx:indexCopy(k+1,torch.range(n_el_kp1,1,-1):long(),output:narrow(k+1,2,n_el_kp1))
+      local subs_subs_idx=subs_idx:narrow(k,n_med,n_el)
+      
+      local tmp=torch.CudaTensor(subs_subs_idx:size(),subs_subs_idx:stride()) -- hard to avoid, because there are some funny memory conflicts...
+      tmp:indexCopy(k,torch.range(x:size(k)-1,1,-1):long(),subs_subs_idx)
+      subs_subs_idx:copy(tmp)
+      
+      -- conjugate         
+      output:narrow(k+1,n_med_kp1,n_el_kp1):narrow(output:nDimension(),2,1):mul(-1)
    end
+
 
 
    return output

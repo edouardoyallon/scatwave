@@ -118,7 +118,7 @@ function gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift,scat)
    g_phase = xx*xi*torch.cos(theta)+yy*xi*torch.sin(theta)
    g_phase = complex.unit_complex(g_phase)
 
-   wv = complex.multiply_real_and_complex_tensor(g_phase,g_modulus,scat)
+   wv = complex.multiply_real_and_complex_tensor(g_phase,g_modulus,scat.myTensor)
    return wv
 end
 
@@ -128,7 +128,7 @@ function morlet_2d(M,N,sigma,slant,xi,theta,offset,fft_shift,scat)
    local g_modulus=complex.realize(gabor_2d(M,N,sigma,slant,0,theta,offset,fft_shift,scat))  
    local K=torch.squeeze(torch.sum(torch.sum(wv,1),2))/(torch.squeeze(torch.sum(torch.sum(g_modulus,1),2)))
 
-   local mor=wv-complex.multiply_complex_number_and_real_tensor(K,g_modulus,scat)
+   local mor=wv-complex.multiply_complex_number_and_real_tensor(K,g_modulus,scat.myTensor)
    local    norm_factor=1/(2*3.1415*sigma^2/slant)
    mor:mul(norm_factor)
    return mor

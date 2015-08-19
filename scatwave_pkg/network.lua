@@ -90,7 +90,7 @@ function network:scat(image_input)
    U[1][1]={}
    local res=0
    local s_pad=self.filters.size[res+1]
-   U[1][1].signal=conv_lib.pad_signal_along_k(conv_lib.pad_signal_along_k(image_input, s_pad[1], 1+mini_batch,self), s_pad[2], 2+mini_batch,self) 
+   U[1][1].signal=conv_lib.pad_signal_along_k(conv_lib.pad_signal_along_k(image_input, s_pad[1], 1+mini_batch,self.myTensor), s_pad[2], 2+mini_batch,self.myTensor) 
       U[1][1].res=0
    U[1][1].j=-1000 -- encode the fact to compute wavelet of scale 0
       U[1][1].mini_batch=mini_batch
@@ -103,14 +103,14 @@ function network:scat(image_input)
    
    S[1][1]=out.A
    local ds=self.J
-   S[1][1].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[1][1].signal,image_input:size(1+mini_batch),1+mini_batch,ds,self),image_input:size(2+mini_batch),2+mini_batch,ds,self)
+   S[1][1].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[1][1].signal,image_input:size(1+mini_batch),1+mini_batch,ds,self.myTensor),image_input:size(2+mini_batch),2+mini_batch,ds,self.myTensor)
    local k=1
    for i=1,#U[2] do
 
          out=wavelet_transform.WT(U[2][i],self)
 
       S[2][i]=out.A
-      S[2][i].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[2][i].signal,image_input:size(1+mini_batch),1+mini_batch,ds,self),image_input:size(2+mini_batch),2+mini_batch,ds,self)
+      S[2][i].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[2][i].signal,image_input:size(1+mini_batch),1+mini_batch,ds,self.myTensor),image_input:size(2+mini_batch),2+mini_batch,ds,self.myTensor)
       
 
 
@@ -131,7 +131,7 @@ function network:scat(image_input)
 
       S[3][i]=out.A
       
-      S[3][i].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[3][i].signal,image_input:size(1+mini_batch),1+mini_batch,ds,self),image_input:size(2+mini_batch),2+mini_batch,ds,self)
+      S[3][i].signal=conv_lib.unpad_signal_along_k(conv_lib.unpad_signal_along_k(S[3][i].signal,image_input:size(1+mini_batch),1+mini_batch,ds,self.myTensor),image_input:size(2+mini_batch),2+mini_batch,ds,self.myTensor)
       -- k=k+1
    end
    

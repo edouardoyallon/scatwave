@@ -76,6 +76,7 @@ function unit_test_scatnet.my_fft_CUDA()
    
    ff_c=ff_c:float()
    ff2_c=ff2_c:float()
+   print('lol')
    print(torch.squeeze(ff:narrow(5,1,1)))
    print(torch.squeeze(ff_c:narrow(5,1,1)))
    local res=torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(complex.abs_value(ff-ff_c),1),2),3),4))

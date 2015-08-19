@@ -17,7 +17,7 @@ end
 
 function wrapper_CUDA_fft.cache(x,k,type)
    local plan_cast = ffi.new('int[1]',{})
-     local n = ffi.new('int[2]',{})
+   local n = ffi.new('int[2]',{})
    n[0] = x:size(k)
    n[1] = x:size(k+1)
    local batch=x:nElement()/(2*x:size(k)*x:size(k+1))

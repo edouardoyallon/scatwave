@@ -7,17 +7,20 @@ local complex = require 'complex'
 local my_fft = require 'wrapper_fft'
 local my_fft_CUDA = require 'cuda/wrapper_CUDA_fft_nvidia'
 local conv_lib = require 'conv_lib'
+local filters_bank = require 'filters_bank'
+
+
 local TOL=1e-3
 function unit_test_scatnet.complex()
-   local playing = torch.Tensor(4,5,7,2)
-   for i = 1,4 do
-      for j = 1,5 do
-         for k = 1, 7 do
-            playing[i][j][k][1]=i*j*k
-            playing[i][j][k][1]=torch.sqrt(i*j*k)
-         end
-      end
-   end
+--   local playing = torch.Tensor(4,5,7,2)
+--   for i = 1,4 do
+--      for j = 1,5 do
+--         for k = 1, 7 do
+--            playing[i][j][k][1]=i*j*k
+--            playing[i][j][k][1]=torch.sqrt(i*j*k)
+--         end
+--      end
+--   end
 
    -- unit_complex
    local alpha=torch.Tensor(1)
@@ -76,9 +79,6 @@ function unit_test_scatnet.my_fft_CUDA()
    
    ff_c=ff_c:float()
    ff2_c=ff2_c:float()
-   print('lol')
-   print(torch.squeeze(ff:narrow(5,1,1)))
-   print(torch.squeeze(ff_c:narrow(5,1,1)))
    local res=torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(complex.abs_value(ff-ff_c),1),2),3),4))
    local res2=torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(complex.abs_value(ff2_c-ff2_c),1),2),3),4))
    
@@ -86,6 +86,48 @@ function unit_test_scatnet.my_fft_CUDA()
    tester:assertlt(res2,TOL,'complex CUDA FFT are not equal')
 
 
+end
+
+
+function unit_test_scatnet.filters_bank()
+   local N
+   local M
+
+   for k=1,10 do
+      N=64+3*k
+      M=65+3*5
+      for J=1,5 do
+
+
+   local filters = filters_bank.morlet_filters_bank_2D(N,M,J,scat)   
+   -- Make sure the padding size is divisible by 2^J
+         local s=filters.size
+         tester:assertlt(s%2^J,TOL,'the padded size is not equal to 2^J')
+                  local lp=0
+         for s=1,#filters.psi do      
+lp=lp+            
+            for l=1,#filters.psi[s].signal
+         -- Make sure that all the filters are real
+               local r = 
+            
+            -- Make sure the center frequency is (1,1) in computer coordinates
+                  
+
+         end
+   
+   -- Check little hood paley
+            lp=
+
+   -- Check norm of low pass
+   
+    -- Check multi resolution (is a subelement of...)
+      end
+end
+
+end
+   
+   function unit_test_scatnet.wavelet()
+   -- Check that the WT is indeed working   
 end
 
 

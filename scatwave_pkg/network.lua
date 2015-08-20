@@ -71,9 +71,15 @@ function network:WT(image_input)
    return wavelet_transform.WT(x,self)
 end
 
+-- Here, we minimize the creation of memory to avoid using garbage collector
+function network:fast_scat(image_input)
+      assert(self.type==image_input:type(),'Not the correct type')
+      local mini_batch=self.dimension_mini_batch-1
+   
+end
 
-
-function network:scat(image_input)
+-- Usual scattering
+function network:scat_with_wavelets(image_input)
    assert(self.type==image_input:type(),'Not the correct type')
    
    local mini_batch=self.dimension_mini_batch-1

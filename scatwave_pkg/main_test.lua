@@ -11,7 +11,7 @@ ScatWave = require 'scatwave'
 
 
 sys.tic()
-y=ScatWave.network.new(128,128,2,2)
+y=ScatWave.network.new(128,128,4,2)
 print(sys.toc())
 
 -- Load lena

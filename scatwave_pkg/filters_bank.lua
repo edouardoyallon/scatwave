@@ -1,6 +1,6 @@
 local conv_lib = require 'conv_lib'
 local complex = require 'complex'
---local my_fft = require 'my_fft'
+
 local filters_bank ={}
 
 function filters_bank.display_littlehood_paley(f)
@@ -49,10 +49,8 @@ function filters_bank.morlet_filters_bank_2D(N,M,J,scat)
       for theta=1,8 do
          filters.psi[i]={}
          filters.psi[i].signal = {}
-         filters.psi[i].signal[1] = morlet_2d(filters.size[1][1], filters.size[1][2], 0.8*2^j, 0.5, 3/4*3.1415/2^j, theta*3.1415/8, 0, 1,scat)
---            print(filters.psi[i].signal[1]:type())         
-         filters.psi[i].signal[1] = my_fft.my_2D_fft_complex(filters.psi[i].signal[1], 1) --my_fft.my_fft_complex(my_fft.my_fft_complex(filters.psi[i].signal[1], 1), 2)           
-
+         filters.psi[i].signal[1] = morlet_2d(filters.size[1][1], filters.size[1][2], 0.8*2^j, 0.5, 3/4*3.1415/2^j, theta*3.1415/8, 0, 1,scat) 
+         filters.psi[i].signal[1] = my_fft.my_2D_fft_complex(filters.psi[i].signal[1], 1)
          for res=2,res_MAX do
             filters.psi[i].signal[res]=conv_lib.periodize_along_k(conv_lib.periodize_along_k(filters.psi[i].signal[1], 1, res-1), 2, res-1)
 

@@ -185,25 +185,27 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
    
    
 
-   local n_el=x:size(k+1)-1
+   local n_el=x:size(k)-1
    local n_med=2
    
-   local n_el_kp1=torch.floor((x:size(k)-1)/2)
-   local n_med_kp1=2+torch.floor((x:size(k))/2)  
+   local n_el_kp1=torch.floor((x:size(k+1)-1)/2)
+   local n_med_kp1=2+torch.floor((x:size(k+1))/2)  
    
    -- If there is something to fill in ? IS IT ??
    if(n_el>0) then
-      local subs_idx=output:narrow(k,n_med_kp1,n_el_kp1)
-      subs_idx:indexCopy(k,torch.range(n_el_kp1,1,-1):long(),output:narrow(k,2,n_el_kp1))
-      local subs_subs_idx=subs_idx:narrow(k+1,n_med,n_el)
+      local subs_idx=output:narrow(k+1,n_med_kp1,n_el_kp1)
+      print(k+1)
+      subs_idx:indexCopy(k+1,torch.range(n_el_kp1,1,-1):long(),output:narrow(k+1,2,n_el_kp1))
+--      local subs_subs_idx=subs_idx:narrow(k,n_med,n_el)
       
-      local tmp=torch.CudaTensor(subs_subs_idx:size(),subs_subs_idx:stride()) -- hard to avoid, because there are some funny memory conflicts...
-      tmp:indexCopy(k+1,torch.range(x:size(k+1)-1,1,-1):long(),subs_subs_idx)
-      subs_subs_idx:copy(tmp)
+  --    local tmp=torch.CudaTensor(subs_subs_idx:size(),subs_subs_idx:stride()) -- hard to avoid, because there are some funny memory conflicts...
+--      tmp:indexCopy(k,torch.range(x:size(k)-1,1,-1):long(),subs_subs_idx)
+--      subs_subs_idx:copy(tmp)
       
       -- conjugate         
-      output:narrow(k,n_med_kp1,n_el_kp1):narrow(output:nDimension(),2,1):mul(-1)
+--      output:narrow(k+1,n_med_kp1,n_el_kp1):narrow(output:nDimension(),2,1):mul(-1)
    end
+
 
 
 

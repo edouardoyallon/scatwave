@@ -8,7 +8,7 @@ local my_fft = require 'wrapper_fft'
 local my_fft_CUDA = require 'cuda/wrapper_CUDA_fft_nvidia'
 local conv_lib = require 'conv_lib'
 local filters_bank = require 'filters_bank'
-
+local myTensor=torch.FloatTensor
 
 local TOL=1e-3
 function unit_test_scatnet.complex()
@@ -90,40 +90,41 @@ end
 
 
 function unit_test_scatnet.filters_bank()
-   local N
-   local M
-
+   local N,M
    for k=1,10 do
       N=64+3*k
       M=65+3*5
       for J=1,5 do
-
-
-   local filters = filters_bank.morlet_filters_bank_2D(N,M,J,scat)   
+         local filters = filters_bank.morlet_filters_bank_2D(N,M,J,my_fft,myTensor)   
    -- Make sure the padding size is divisible by 2^J
          local s=filters.size
-         tester:assertlt(s%2^J,TOL,'the padded size is not equal to 2^J')
-                  local lp=0
+         tester:assertlt(s[1][2]%2^J+s[1][1]%2^J,TOL,'the padded size is not equal to 2^J')
+--                  local lp=0
          for s=1,#filters.psi do      
-lp=lp+            
-            for l=1,#filters.psi[s].signal
-         -- Make sure that all the filters are real
-               local r = 
+            --lp=lp+            
             
-            -- Make sure the center frequency is (1,1) in computer coordinates
-                  
+            
+            for l=1,#filters.psi[s].signal do
+               -- Make sure that all the filters are real
+               local r = torch.squeeze(torch.sum(torch.sum(torch.squeeze(filters.psi[s].signal[l]:narrow(3,2,1)),1),2))
+               tester:assertlt(r,TOL,'the filters are not real in Fourier')
 
-         end
+-- Make sure the center frequency is (1,1) in computer coordinates
+               local c=torch.squeeze(torch.sum(torch.abs(filters.psi[s].signal[l][1][1]),1))
+tester:assertlt(c,TOL,'the filters are not of mean 0...')
+       end
    
    -- Check little hood paley
-            lp=
+--            lp=
 
    -- Check norm of low pass
    
     -- Check multi resolution (is a subelement of...)
-      end
+--      end
 end
 
+   end
+   end
 end
    
    function unit_test_scatnet.wavelet()
@@ -133,7 +134,7 @@ end
 
 function unit_test_scatnet.conv_lib()
    -- First we check that pad > unpad gives the identity
-   local myTensor=torch.FloatTensor
+
    for i=1,100 do
       local x=torch.randn(i,i):float()
       local z=conv_lib.pad_signal_along_k(conv_lib.pad_signal_along_k(x,i+torch.ceil(i/2),1,myTensor),i+torch.ceil(i/2),2,myTensor)

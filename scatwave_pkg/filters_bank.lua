@@ -36,6 +36,15 @@ function get_padding_size(N,M,max_ds,J)
    return sz
 end
 
+function reduced_res(x,res,k,myTensor)
+   local s=x:stride()
+   s[k]=0
+   local mask = myTensor(x:size(),s):fill(1) -- Tensor
+      mask:narrow(k,2^res,x:size(k)-2^(res+1)):fill(1)
+   local y=torch.cmul(x,mask)
+   return conv_lib.periodize_along_k(y,k,res-1)
+end
+
 
 function filters_bank.morlet_filters_bank_2D(N,M,J,my_fft,myTensor)
    local filters={}

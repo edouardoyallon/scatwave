@@ -15,7 +15,7 @@ function network:__init(M,N,J,dimension_mini_batch)
    self.myTensor=torch.FloatTensor
    self.dimension_mini_batch=dimension_mini_batch or 1
    self.fft=require 'wrapper_fft'   
-   self.filters=filters_bank.morlet_filters_bank_2D(self.N,self.M,self.J,self)
+   self.filters=filters_bank.morlet_filters_bank_2D(self.N,self.M,self.J,self.fft,self.myTensor)
 end
 
 
@@ -73,13 +73,23 @@ end
 
 -- Here, we minimize the creation of memory to avoid using garbage collector
 function network:fast_scat(image_input)
+   myTensor=self.myTensor
       assert(self.type==image_input:type(),'Not the correct type')
-      local mini_batch=self.dimension_mini_batch-1
-   
+   local mini_batch=self.dimension_mini_batch-1
+   local output_fast=myTensor(size_du_truc)
+   local tmpbatch
+   local xf_tmp=fft
+   for j1=1,J do
+      U[j1]:cmul(xf_tmp,filters[j1].resthetaetc)
+      U_real[j1]=torch.sqrt(torch.square(U[j1]:narrow(lastdim,1,1)))
+      for j2=1,J do
+               U[j2]:cmul(xf_tmp,filters[j1].resthetaetc)
+      end
+   end
 end
 
 -- Usual scattering
-function network:scat_with_wavelets(image_input)
+function network:scat(image_input)
    assert(self.type==image_input:type(),'Not the correct type')
    
    local mini_batch=self.dimension_mini_batch-1

@@ -50,6 +50,7 @@ function conv_lib.pad_signal_along_k(x,new_size_along_k,k,myTensor)
 end
 
 
+
 function conv_lib.unpad_signal_along_k(x,original_size_along_k,k,res,myTensor) 
    local n_decay=torch.floor((x:size(k)*2^res-original_size_along_k)/2^(res+1))+1   
    local f_size_along_k=1+torch.floor((original_size_along_k-1)/(2^res))
@@ -58,7 +59,7 @@ function conv_lib.unpad_signal_along_k(x,original_size_along_k,k,res,myTensor)
 end
 
 
-function conv_lib.periodize_along_k(h,k,l)
+function conv_lib.periodize_along_k(h,k,l,nonorm)
       assert(k<=h:nDimension(),'k is bigger than the dimension')
    local dim=h:size()
    
@@ -79,8 +80,9 @@ function conv_lib.periodize_along_k(h,k,l)
    
    local reshaped_h=torch.view(h,new_dim)
    local  summed_h=torch.view(torch.sum(reshaped_h,k),final_dim)
-
-   summed_h:mul(1/2^l)
+   if(not nonorm) then
+      summed_h:mul(1/2^l)
+      end
    return summed_h
 end
 

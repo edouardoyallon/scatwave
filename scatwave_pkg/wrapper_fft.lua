@@ -150,7 +150,7 @@ function wrapper_fft.my_2D_fft_real_batch(x,k)
    local n_med_kp1=2+torch.floor((x:size(k+1))/2)  
    
    -- If there is something to fill in ? IS IT ??
-   if(n_el>0) then
+   if(n_el>0 and n_el_kp1>0) then
       local subs_idx=output:narrow(k+1,n_med_kp1,n_el_kp1)
       subs_idx:indexCopy(k+1,torch.range(n_el_kp1,1,-1):long(),output:narrow(k+1,2,n_el_kp1))
       local subs_subs_idx=subs_idx:narrow(k,n_med,n_el)

@@ -125,6 +125,10 @@ function wrapper_CUDA_fft.my_2D_fft_complex(x,backward)
       return output
 end
 
+function wrapper_CUDA_fft.my_2D_ifft_complex_to_real_batch_inplace(x,k,output)   
+   
+end
+
 
 function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)   
    -- Defines a 2D convolution that batches until the k-th dimension

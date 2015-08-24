@@ -36,6 +36,14 @@ function complex.realize(x)
    return ((x:select(x:dim(),1)):clone())
 end
 
+function complex.realize_inplace(x)
+   assert(tools.is_complex(x),'The number is not complex')
+   x:narrow(x:nDimension(),2,1):fill(0)
+   return x
+
+end
+
+
 function complex.multiply_complex_tensor(x,y,mini_batch_x,myTensor)
    assert(tools.is_complex(x),'The number is not complex')
    
@@ -85,6 +93,14 @@ function complex.multiply_real_and_complex_tensor(x,y,myTensor)
    torch.cmul(z_real, xr, yr)
    torch.cmul(z_imag, xi, yr)
    return z
+end
+
+function complex.multiply_complex_tensor_with_real_tensor_in_place(x,y,output)
+   assert(tools.is_complex(x),'First input should be complex')
+   
+   output:narrow(output:nDimension(),1,1):cmul(x:narrow(x:nDimension(),1,1),y)
+   output:narrow(output:nDimension(),2,1):cmul(x:narrow(x:nDimension(),1,1),y)
+   
 end
 
 

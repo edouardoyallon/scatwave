@@ -3,12 +3,15 @@ local complex = require 'complex'
 
 local filters_bank ={}
 
-function filters_bank.display_littlehood_paley(f)
-   local A=torch.Tensor(torch.LongStorage({f.size[1][1],f.size[1][2]})):zero()
+function filters_bank.display_littlehood_paley(f,r)
+   r= r or 1
+   local A=torch.FloatTensor(torch.LongStorage({f.size[r][1],f.size[r][2]})):zero()
+
    for i=1,#f.psi do
-      A=A+complex.abs_value(f.psi[i].signal[1])
+
+      A=A+complex.abs_value(f.psi[i].signal[r])
    end
-   local B=torch.Tensor(torch.LongStorage({f.size[1][1],f.size[1][2]})):fill(0)
+   local B=torch.Tensor(torch.LongStorage({f.size[r][1],f.size[r][2]})):fill(0)
   
    -- fftshift to display... 
    for i=1,A:size(1) do
@@ -22,9 +25,9 @@ function filters_bank.display_littlehood_paley(f)
 end
 
 function get_padding_size(N,M,max_ds,J)
-   local sz=torch.LongTensor(J+1,2)
+   local sz=torch.LongTensor(J,2)
 
-   for res=0,J do
+   for res=0,J-1 do
    local N_p=2^J*torch.ceil((N+2*2^J)/2^J)
    N_p=torch.max(torch.Tensor({{N_p,1}}))/2^res
 
@@ -38,11 +41,18 @@ end
 
 function reduced_res(x,res,k,myTensor)
    local s=x:stride()
-   s[k]=0
+   for l=1,#s do
+      if not l==k then
+         s[l]=0
+      end
+   end
    local mask = myTensor(x:size(),s):fill(1) -- Tensor
-      mask:narrow(k,2^res,x:size(k)-2^(res+1)):fill(1)
+
+   local z=mask:narrow(k,x:size(k)*2^(-res-1)+1,x:size(k)*2^(-res)):fill(0)
+--   z:fill(0)
+      print(z:size())
    local y=torch.cmul(x,mask)
-   return conv_lib.periodize_along_k(y,k,res-1)
+   return conv_lib.periodize_along_k(y,k,res):mul(2^res)
 end
 
 
@@ -61,9 +71,9 @@ function filters_bank.morlet_filters_bank_2D(N,M,J,my_fft,myTensor)
          filters.psi[i].signal = {}
 
          filters.psi[i].signal[1] = morlet_2d(filters.size[1][1], filters.size[1][2], 0.8*2^j, 0.5, 3/4*3.1415/2^j, theta*3.1415/8, 0, 1,my_fft,myTensor) 
-         filters.psi[i].signal[1] = my_fft.my_2D_fft_complex(filters.psi[i].signal[1], 1)
+         filters.psi[i].signal[1] = my_fft.my_2D_fft_complex(filters.psi[i].signal[1])
          for res=2,res_MAX do
-            filters.psi[i].signal[res]=conv_lib.periodize_along_k(conv_lib.periodize_along_k(filters.psi[i].signal[1], 1, res-1), 2, res-1)
+            filters.psi[i].signal[res]=reduced_res(reduced_res(filters.psi[i].signal[1],res-1,2,myTensor),res-1,1,myTensor)--conv_lib.periodize_along_k(conv_lib.periodize_along_k(filters.psi[i].signal[1], 1, res-1), 2, res-1)
 
          end
 
@@ -130,6 +140,9 @@ function gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift,my_fft,myTensor)
    g_phase = complex.unit_complex(g_phase)
 
    wv = complex.multiply_real_and_complex_tensor(g_phase,g_modulus,myTensor)
+   local    norm_factor=1/(2*3.1415*sigma^2/slant)
+   wv:mul(norm_factor)
+
    return wv
 end
 
@@ -141,8 +154,7 @@ function morlet_2d(M,N,sigma,slant,xi,theta,offset,fft_shift,my_fft,myTensor)
    local K=torch.squeeze(torch.sum(torch.sum(wv,1),2))/(torch.squeeze(torch.sum(torch.sum(g_modulus,1),2)))
 
    local mor=wv-complex.multiply_complex_number_and_real_tensor(K,g_modulus,myTensor)
-   local    norm_factor=1/(2*3.1415*sigma^2/slant)
-   mor:mul(norm_factor)
+
    return mor
 end
 

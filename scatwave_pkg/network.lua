@@ -72,19 +72,22 @@ function network:WT(image_input)
 end
 
 -- Here, we minimize the creation of memory to avoid using garbage collector
-function network:fast_scat(image_input)
+function network:scat_inplace(image_input)
    myTensor=self.myTensor
       assert(self.type==image_input:type(),'Not the correct type')
    local mini_batch=self.dimension_mini_batch-1
    local output_fast=myTensor(size_du_truc)
    local tmpbatch
-   local xf_tmp=fft
+   local xf_tmp=fft_inplace(image_input,xf_tmp)
    for j1=1,J do
       U[j1]:cmul(xf_tmp,filters[j1].resthetaetc)
       U_real[j1]=torch.sqrt(torch.square(U[j1]:narrow(lastdim,1,1)))
+      U_realff[j1]=fft_inplace(image_input,xf_tmp)
       for j2=1,J do
-               U[j2]:cmul(xf_tmp,filters[j1].resthetaetc)
+         if(j1<j2) then
+               U[j2]:cmul(U_realff[j1],filters[j1].resthetaetc)
       end
+   end
    end
 end
 

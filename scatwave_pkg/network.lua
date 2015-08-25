@@ -71,8 +71,62 @@ function network:WT(image_input)
    return wavelet_transform.WT(x,self)
 end
 
+function network:allocate_inplace(mini_batch_dim)
+   local filters=self.filters
+   local myTensor=self.myTensor
+   local filters_ip={}
+   filters_ip.psi={}
+   filters_ip.phi={}
+   
+   local function return_size_batched(z)
+      if(mini_batch_dim:nDimension()==1) then
+         return torch.LongStorage({mini_batch_dim[1],z[1],z[2]})
+      elseif(mini_batch_dim:nDimension()==2) then
+         return torch.LongStorage({mini_batch_dim[1],mini_batch_dim[2],z[1],z[2]})
+else error('Bug in the number of possible dimension')
+   end   
+
+   for i=1,#filters.psi do
+      filters_ip.psi[i]={}
+      filters_ip.psi[i].signal={}
+      for r=1,#filters.psi[i].signal do
+         filters_ip.psi[i].signal[r]=complex.realize(filters.psi[i].signal[r])
+      end
+   end
+
+      filters_ip.phi.signal={}
+      for r=1,#filters.phi.signal do
+         filters_ip.phi.signal[r]=complex.realize(filters.phi.signal[r])
+      end
+   
+   
+   filters_ip.J=filters.J
+   filters_ip.n_f=8*8*filters.J*(filters.J-1)
+   self.ip={}
+   self.ip.filters=filters_ip
+   
+   self.ip.U1_c={}
+   self.ip.U1_r={}
+   self.ip.U2_c={}
+   self.ip.U2_r={}
+   
+   for r=1,filters.size:size(1) do
+
+         self.ip.U1_r[r]=myTensor(torch.LongStorage({mini_batch_dim,filters.size[r][1],filters.size[r][2]}))
+      self.ip.U2_r[r]=myTensor(torch.LongStorage({filters.size[r][1],filters.size[r][2]}))
+         self.ip.U1_c[r]=myTensor(torch.LongStorage({filters.size[r][1],filters.size[r][2],2}))
+      self.ip.U2_c[r]=myTensor(torch.LongStorage({filters.size[r][1],filters.size[r][2],2}))
+
+   end
+
+   self.ip.S=myTensor(torch.LongStorage({filters.size[filters.size:size(1)][1],filters.size[filters.size:size(1)][2],filters_ip.n_f}))
+
+   self.ip.xf=myTensor(torch.LongStorage({filters.size[1][1],filters.size[1][2]}))
+
+end
+
 -- Here, we minimize the creation of memory to avoid using garbage collector
-function network:scat_inplace(image_input)
+--[[function network:scat_inplace(image_input)
    assert(self.type==image_input:type(),'Not the correct type')
    local mini_batch = self.dimension_mini_batch-1
    local output_fast = myTensor(size_du_truc)
@@ -144,7 +198,7 @@ function network:scat_inplace(image_input)
       
    end
 end
-
+--]]
 -- Usual scattering
 function network:scat(image_input)
    assert(self.type==image_input:type(),'Not the correct type')

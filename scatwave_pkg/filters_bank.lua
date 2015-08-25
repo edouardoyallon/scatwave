@@ -25,6 +25,8 @@ function filters_bank.display_littlehood_paley(f,r)
    return B
 end
 
+
+
 function get_padding_size(N,M,max_ds,J)
    local sz=torch.LongTensor(J,2)
 

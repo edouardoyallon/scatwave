@@ -44,9 +44,6 @@ function unit_test_scatnet.my_fft()
    local ff2 = my_fft.my_2D_fft_complex(playing2)
    local iff2 = my_fft.my_2D_fft_complex(ff2,1)
    
- 
---   print(playing[1][1][1][1])
---   print(playing4[1][1][1][1])
    local res = torch.squeeze(torch.sum(torch.sum(complex.abs_value(playing2-iff2),1),2))
 
    tester:assertlt(res,TOL,'complex IFFT and FFT not equal: ')

@@ -77,7 +77,7 @@ function network:scat_inplace(image_input)
    local mini_batch=self.dimension_mini_batch-1
    local output_fast=myTensor(size_du_truc)
    local tmpbatch
-   local xf_tmp=fft_inplace(image_input,xf_tmp)
+   local xf_tmp=wrapper_fft.my_2D_fft_complex_batch_inplace(image_input,xf_tmp)
    local xf
    local U_c[]
    local U_r[]

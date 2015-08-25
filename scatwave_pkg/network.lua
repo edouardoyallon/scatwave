@@ -78,26 +78,54 @@ function network:allocate_inplace(mini_batch_dim)
    filters_ip.psi={}
    filters_ip.phi={}
    
-   local function return_size_batched(z)
-      if(mini_batch_dim:nDimension()==1) then
-         return torch.LongStorage({mini_batch_dim[1],z[1],z[2]})
-      elseif(mini_batch_dim:nDimension()==2) then
-         return torch.LongStorage({mini_batch_dim[1],mini_batch_dim[2],z[1],z[2]})
-else error('Bug in the number of possible dimension')
-   end   
-
+   local function concatenateLongStorage(x,y)
+      if(not x) then
+         return y
+      else
+         local z=torch.LongStorage(#x+#y)
+         for i=1,#x do
+            z[i]=x[i]
+         end   
+         for i=1,#y do
+            z[i+#x]=y[i]
+         end
+         return z
+      end
+   end
+   
    for i=1,#filters.psi do
       filters_ip.psi[i]={}
       filters_ip.psi[i].signal={}
       for r=1,#filters.psi[i].signal do
-         filters_ip.psi[i].signal[r]=complex.realize(filters.psi[i].signal[r])
+         local tmp=complex.realize(filters.psi[i].signal[r])
+         local sizes=concatenateLongStorage(mini_batch_dim,tmp:size())
+         local strides=torch.LongStorage(#sizes)
+         for l=1,#sizes do
+            if(l<=#mini_batch_dim) then
+               strides[l]=0
+            else
+               strides[l]=tmp:stride(l-#mini_batch_dim)
+            end
+         end
+         filters_ip.psi[i].signal[r]=myTensor(tmp:storage(),tmp:storageOffset(),sizes,strides)
       end
    end
-
-      filters_ip.phi.signal={}
-      for r=1,#filters.phi.signal do
-         filters_ip.phi.signal[r]=complex.realize(filters.phi.signal[r])
+   
+   filters_ip.phi.signal={}
+   for r=1,#filters.phi.signal do
+      local tmp=complex.realize(filters.phi.signal[r])
+      local sizes=concatenateLongStorage(mini_batch_dim,tmp:size())
+      local strides=torch.LongStorage(#sizes)
+      for l=1,#sizes do
+         if(l<=#mini_batch_dim) then
+            strides[l]=0
+         else
+            strides[l]=tmp:stride(l-#mini_batch_dim)
+         end
       end
+      filters_ip.phi.signal[r]=myTensor(tmp:storage(),tmp:storageOffset(),sizes,strides)
+      
+   end
    
    
    filters_ip.J=filters.J
@@ -111,35 +139,40 @@ else error('Bug in the number of possible dimension')
    self.ip.U2_r={}
    
    for r=1,filters.size:size(1) do
-
-         self.ip.U1_r[r]=myTensor(torch.LongStorage({mini_batch_dim,filters.size[r][1],filters.size[r][2]}))
-      self.ip.U2_r[r]=myTensor(torch.LongStorage({filters.size[r][1],filters.size[r][2]}))
-         self.ip.U1_c[r]=myTensor(torch.LongStorage({filters.size[r][1],filters.size[r][2],2}))
-      self.ip.U2_c[r]=myTensor(torch.LongStorage({filters.size[r][1],filters.size[r][2],2}))
-
+      print(filters.size)
+      local sz_r=concatenateLongStorage(mini_batch_dim,torch.LongStorage({filters.size[r][1],filters.size[r][2]}))
+      local sz_c=concatenateLongStorage(mini_batch_dim,torch.LongStorage({filters.size[r][1],filters.size[r][2],2}))
+      self.ip.U1_r[r]=myTensor(sz_r)
+      self.ip.U2_r[r]=myTensor(sz_r)
+      self.ip.U1_c[r]=myTensor(sz_c)
+      self.ip.U2_c[r]=myTensor(sz_c)
+      
    end
-
-   self.ip.S=myTensor(torch.LongStorage({filters.size[filters.size:size(1)][1],filters.size[filters.size:size(1)][2],filters_ip.n_f}))
-
-   self.ip.xf=myTensor(torch.LongStorage({filters.size[1][1],filters.size[1][2]}))
-
+   
+   self.ip.S=myTensor(concatenateLongStorage(mini_batch_dim,torch.LongStorage({filters_ip.n_f,filters.size[filters.size:size(1)][1],filters.size[filters.size:size(1)][2]})))
+   
+   self.ip.xf=myTensor(torch.LongStorage({filters.size[1][1],filters.size[1][2],2}))
+   
 end
 
 -- Here, we minimize the creation of memory to avoid using garbage collector
---[[function network:scat_inplace(image_input)
+function network:scat_inplace(image_input)
    assert(self.type==image_input:type(),'Not the correct type')
    local mini_batch = self.dimension_mini_batch-1
-   local output_fast = myTensor(size_du_truc)
-      
-   local xf
-   local U_c[]
-   local U_r[]
+   local wrapper_fft=self.fft
+   
+   local xf=self.ip.xf
+   local U1_c=self.ip.U1_c
+   local U1_r=self.ip.U1_r
+   local S=self.ip.S
+   local U2_c=self.ip.U2_c
+   local U2_r=self.ip.U2_r
    local ds
-   local S
-   local k=0
-   local J=
-   -- FFT of the input image
-   local xf_tmp = wrapper_fft.my_2D_fft_complex_batch(image_input,mini_batch,nil,xf_tmp)
+   local filters_ip = self.ip.filters
+   local k=1
+
+      -- FFT of the input image
+   xf = wrapper_fft.my_2D_fft_complex_batch(image_input,mini_batch,nil,xf)
    -- Compute the multiplication with xf and the LF, store it in U1_c[1]
    complex.multiply_complex_tensor_with_real_tensor_in_place(xf,filters_ip.phi.signal[1],U1_c[1])
    -- Compute the complex to real iFFT of U1_c[1] and store it in U1_r[1]
@@ -172,33 +205,34 @@ end
       for j2=1,#filters_ip.psi do
          -- for j2
          if (filters_ip.psi[j2].j>filters_ip.psi[j1].j) then
-         -- Compute the multiplication with U1_c[j1] and the filters, and store it in U2_c[j1]
-         complex.multiply_complex_tensor_with_real_tensor_inplace(U1_c[j1],filters_inplace.psi[j2].signal[j1],U2_c[j1])
-         -- Compute the iFFT of U2_c[j1], and store it in U2_c[j1]
+            -- Compute the multiplication with U1_c[j1] and the filters, and store it in U2_c[j1]
+            complex.multiply_complex_tensor_with_real_tensor_inplace(U1_c[j1],filters_inplace.psi[j2].signal[j1],U2_c[j1])
+            -- Compute the iFFT of U2_c[j1], and store it in U2_c[j1]
             wrapper_fft.my_2D_fft_complex_batch(U2_c[j1],mini_batch,1,U2_c[j1])         
                -- Subsample it and store it in U2_c[j2]
                U2_c[j2]=conv_lib.downsample_2D_inplace(U2_c[j1],j2-j1,mini_batch,myTensor)
             -- Compute the modulus and store it in U2_r[j2]
-      complex.abs_value_inplace(U2_c[j2],U2_r[j2])
+            complex.abs_value_inplace(U2_c[j2],U2_r[j2])
             -- Compute the Fourier transform of U2_r[j2] and store it in U2_c[j2]
-      my_fft.my_2D_fft_real_to_complex_batch(U2_r[j2],mini_batch,U2_c[j2])
+            my_fft.my_2D_fft_real_to_complex_batch(U2_r[j2],mini_batch,U2_c[j2])
             -- Compute the multiplication with U2_c[j2] and the LF, store it in U2_c[j2]
-      complex.multiply_complex_tensor_with_real_tensor_in_place(U2_c[j2],filters_ip.phi.signal[j2],U2_c[j2])
+            complex.multiply_complex_tensor_with_real_tensor_in_place(U2_c[j2],filters_ip.phi.signal[j2],U2_c[j2])
             -- Compute the complex to real iFFT of U2_c[j2] and store it in U2_r[j2]
             wrapper_fft.my_2D_ifft_complex_to_real_batch(U2_c[j2],mini_batch,U2_r[j2])
             -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
-      ds=conv_lib.downsample_2D_inplace(U2_r[j2],J-j2,mini_batch,myTensor)
-      S:narrow(mini_batch,k,1):copy(ds)
-      k=k+1
-            end
+            ds=conv_lib.downsample_2D_inplace(U2_r[j2],J-j2,mini_batch,myTensor)
+            S:narrow(mini_batch,k,1):copy(ds)
+            k=k+1
+         end
       end
       
       --
       
       
    end
+   return S
 end
---]]
+
 -- Usual scattering
 function network:scat(image_input)
    assert(self.type==image_input:type(),'Not the correct type')

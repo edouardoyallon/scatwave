@@ -16,6 +16,13 @@ function complex.modulus_wise(U)
    return U
 end
 
+-- Use with care, it changes x
+function complex.abs_value_inplace(x,out)
+   x:cmul(x)
+   out:fill(0)
+   out:add(x:narrow(x:nDimension(),1,1),x:narrow(x:nDimension(),2,1))
+--   x:narrow(x:nDimension)
+end
 
 function complex.abs_value(h)
    assert(tools.is_complex(h),'The number is not complex')

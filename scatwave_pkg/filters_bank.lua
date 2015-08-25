@@ -56,6 +56,9 @@ function reduced_res(x,res,k,myTensor)
    return conv_lib.periodize_along_k(y,k,res,1)
 end
 
+function filters_bank.morlet_filters_bank_2D_inplace(N,M,J,my_fft,myTensor)
+   
+end
 
 function filters_bank.morlet_filters_bank_2D(N,M,J,my_fft,myTensor)
    local filters={}

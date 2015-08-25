@@ -81,28 +81,34 @@ function network:scat_inplace(image_input)
    local xf
    local U_c[]
    local U_r[]
-   
+   local ds
+      local S
+      local k=0
    -- Compute the multiplication with xf and the LF, store it in U1_c[1]
    complex.multiply_complex_tensor_with_real_tensor_in_place(xf,filters_inplace.phi.signal[1],U1_c[1])
    -- Compute the complex to real iFFT of U1_c[1] and store it in U1_r[1]
    wrapper_CUDA_fft.my_2D_ifft_complex_to_real_batch_inplace(U1_c[1],mini_batch,U1_r[1])
    -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
-   local st=U1_r[1]:stride()
-   st[1+mini_batch]=2*st[1+mini_batch]
-   st[2+mini_batch]=2*st[2+mini_batch]
-   local ds=myTensor(U1_r[1]:storage(),U1_r[1]:size(),st)
-   S:narrow(ds:view):copy(ds)
+   ds=conv_lib.downsample_2D_inplace(U1_r[1],j,mini_batch,myTensor)
+   S:narrow(mini_batch,k,1):copy(ds)
+   k=k+1
    --   local conv_lib.downsample_inplace(S
 
    conv_lib.downsample_inplace(S,J,out)
-   for j1=1,J do
+   for j1=1,filters_ip.J do
       -- for j1
       -- Compute the multiplication with xf and the filters which is real in Fourier, finally store it in U1_c[1]
+         complex.multiply_complex_tensor_with_real_tensor_inplace(xf,filters_inplace.psi[j1].signal[1],U1_c[1])
+
       -- Since cuFFT is fast, we do not periodize the signal      
       -- Compute the iFFT of U1_c[1], and store it in U1_c[1]      
+      wrapper_CUDA_fft.my_2D_ifft_complex_to_real_batch_inplace(U1_c[1],mini_batch,U1_r[1])
       -- We subsample it manually by changing its stride and store the subsampling in U1_c[j1]
+      U1_c[j1]=wrapper_CUDA_fft.conv_lib.downsample_2D_inplace(U1_c[1],j1,mini_batch,myTensor)
       -- Compute the modulus and store it in U1_r[j1]
+      complex.abs_value_inplace(U1_c[j1],U1_r[j1])
       -- Compute the Fourier transform and store it in U1_c[j1]
+      my_fft.my_2D_fft_real_to_complex_batch_inplace(U1_r[j1],U1_c[j1])
       -- Compute the multiplication with U1_c[j1] and the LF, store it in U2_c[j1]
       -- Compute the iFFT complex to real of U2_c[j1] and store it in U1_r[j1]
       -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
@@ -121,18 +127,7 @@ function network:scat_inplace(image_input)
 
 --
       
-      U_c[j1]:cmul(xf_tmp,filters[j1].resthetaetc)
-      U_real[j1]=torch.sqrt(torch.square(U[j1]:narrow(lastdim,1,1)))
-      fft_inplace(image_input,U_real)
-      for j2=1,J do
-         -- Compute the multiplication with the filters which is real in Fourier and store it in U_c
-         -- Compute the iFFT, and store it in U_c
-      -- Compute the modulus and store it in U_r
-
-         if(j1<j2) then
-               U[j2]:cmul(U_realff[j1],filters[j1].resthetaetc)
-      end
-   end
+    
    end
 end
 

@@ -187,8 +187,8 @@ function network:scat_inplace(image_input)
    local k=1
    local J=filters_ip.J
    
-   local decay_x=torch.floor((filters_ip.size[filters_ip.size:size(1)][1]*2^J-S:size(mini_batch+1))/2^(J+1))+1   
-   local decay_y=torch.floor((filters_ip.size[filters_ip.size:size(1)][2]*2^J-S:size(mini_batch+2))/2^(J+1))+1         
+   local decay_x=2--torch.floor((filters_ip.size[filters_ip.size:size(1)][1]*2^J-S:size(mini_batch+1))/2^(J+1))+1   
+   local decay_y=2--torch.floor((filters_ip.size[filters_ip.size:size(1)][2]*2^J-S:size(mini_batch+2))/2^(J+1))+1         
       
       
       
@@ -205,7 +205,9 @@ function network:scat_inplace(image_input)
    -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
    
    ds=conv_lib.downsample_2D_inplace(U1_r[1],J,mini_batch,myTensor)
-   
+   print(S:size())
+   print(decay_y)
+   print(ds:size())
    
    S:narrow(mini_batch,k,1):copy(ds:narrow(mini_batch,decay_x,S:size(mini_batch+1)):narrow(mini_batch+1,decay_y,S:size(mini_batch+2)))
    k=k+1
@@ -290,11 +292,6 @@ function network:scat_inplace(image_input)
 end
 
 
-
-
-
-
-
 function network:scat_inplace_DS(image_input)
    assert(self.type==image_input:type(),'Not the correct type')
    
@@ -307,9 +304,6 @@ function network:scat_inplace_DS(image_input)
    
    conv_lib.pad_signal_along_k(image_input,filters_ip.size[1][1],mini_batch,nil,x_)
    conv_lib.pad_signal_along_k(x_,filters_ip.size[1][2],mini_batch+1,nil,x)
-   
-   
-   
    
    local wrapper_fft=self.fft
    
@@ -326,22 +320,23 @@ function network:scat_inplace_DS(image_input)
    local J=filters_ip.J
    
    
-   local decay_x=torch.floor((filters_ip.size[filters_ip.size:size(1)][1]*2^J-S:size(mini_batch+1))/2^(J+1))+1   
-   local decay_y=torch.floor((filters_ip.size[filters_ip.size:size(1)][2]*2^J-S:size(mini_batch+2))/2^(J+1))+1         
-      
+   local decay_x=2--torch.floor((filters_ip.size[filters_ip.size:size(1)][1]*2^J-S:size(mini_batch+1))/2^(J+1))+1   
+   local decay_y=2--torch.floor((filters_ip.size[filters_ip.size:size(1)][2]*2^J-S:size(mini_batch+2))/2^(J+1))+1         
+
       -- FFT of the input image
       wrapper_fft.my_2D_fft_real_batch(image_input,mini_batch,xf)
-   
+
    -- Compute the multiplication with xf and the LF, store it in U1_c[1]
    complex.multiply_complex_tensor_with_real_tensor_in_place(xf,filters_ip.phi.signal[1],U1_c[1])
    
    -- Compute the complex to real iFFT of U1_c[1] and store it in U1_r[1]
    complex.periodize_in_place(U1_c[1],J,mini_batch,U1_c[J+1])
-   
+
    -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
    
    --   ds=conv_lib.downsample_2D_inplace(U1_r[1],J-1,mini_batch,myTensor)
    ds=wrapper_fft.my_2D_ifft_complex_to_real_batch(U1_c[J+1],mini_batch,U1_r[J+1])
+
    S:narrow(mini_batch,k,1):copy(ds:narrow(mini_batch,decay_x,S:size(mini_batch+1)):narrow(mini_batch+1,decay_y,S:size(mini_batch+2)))
    k=k+1
    
@@ -374,6 +369,7 @@ function network:scat_inplace_DS(image_input)
       
       -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
       ds=wrapper_fft.my_2D_ifft_complex_to_real_batch(U2_c[J+1],mini_batch,U1_r[J+1])
+
       S:narrow(mini_batch,k,1):copy(ds:narrow(mini_batch,decay_x,S:size(mini_batch+1)):narrow(mini_batch+1,decay_y,S:size(mini_batch+2)))
       k=k+1
       

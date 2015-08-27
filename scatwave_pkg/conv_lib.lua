@@ -26,7 +26,7 @@ end
 
 
 -- Apply a symetric padding and center the signal-- assuming the signal is real!
-function conv_lib.pad_signal_along_k(x,new_size_along_k,k,myTensor)
+function conv_lib.pad_signal_along_k(x,new_size_along_k,k,myTensor,out)
    local fs=torch.LongStorage(x:nDimension())
    for l=1,x:nDimension() do
       if(l==k) then
@@ -43,11 +43,18 @@ function conv_lib.pad_signal_along_k(x,new_size_along_k,k,myTensor)
    for i=1,new_size_along_k do
       idx[i]=(id_tmp[(i-n_decay-1)%id_tmp:size(1)+1])
    end   
+   local y
+   if(not out) then
+      y=myTensor(fs)
+   else
+      y=out
+   end
 
-   local y=myTensor(fs)
    y:index(x,k,idx) 
    return y
 end
+
+
 
 
 

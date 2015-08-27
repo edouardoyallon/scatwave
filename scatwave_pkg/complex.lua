@@ -106,9 +106,23 @@ function complex.multiply_complex_tensor_with_real_tensor_in_place(x,y,output)
    assert(tools.is_complex(x),'First input should be complex')
    
    output:narrow(output:nDimension(),1,1):cmul(x:narrow(x:nDimension(),1,1),y)
-   output:narrow(output:nDimension(),2,1):cmul(x:narrow(x:nDimension(),1,1),y)
+   output:narrow(output:nDimension(),2,1):cmul(x:narrow(x:nDimension(),2,1),y)
    
 end
+
+
+function complex.periodize_in_place(x,ds,batch_size,output)
+   assert(tools.is_complex(x),'First input should be complex')   
+      output:fill(0)
+
+   for l1=1,2^ds do
+      for l2=1,2^ds do
+         output:add(x:narrow(batch_size,1+(l1-1)*x:size(batch_size)/2^ds,
+                             x:size(batch_size)/2^ds):narrow(batch_size+1,1+(l2-1)*x:size(batch_size+1)/2^ds,x:size(batch_size+1)/2^ds))
+                             end
+   end
+end
+
 
 
 function complex.multiply_complex_number_and_real_tensor(x,y,myTensor)

@@ -40,7 +40,7 @@ end
 
 
 
-function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward)   
+function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward,out)   
    -- Defines a 2D convolution that batches until the k-th dimension
 
    local type = cuFFT.C2C
@@ -50,7 +50,14 @@ function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward)
    local in_data = torch.data(x)
    local in_data_cast = ffi.cast(fftwf_complex_cast, in_data)
    
-   local output = torch.CudaTensor(x:size(),x:stride()):zero()
+   local output
+   if(not out) then
+      output = torch.CudaTensor(x:size(),x:stride()):zero()
+   else
+      output=out
+   end
+   
+
    local output_data = torch.data(output);
    local output_data_cast = ffi.cast(fftwf_complex_cast, output_data)                  
                   
@@ -82,20 +89,84 @@ function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward)
    --[[--------------------------------------]]
 
    if(backward) then
-      output=torch.div(output,x:size(k))   
+      output:div(x:size(k))   
    end
    return output
 end
 
 
 
-function wrapper_CUDA_fft.my_2D_fft_complex(x,backward)   
+-- IT DESTROYS THE INPUT!(i.e. x)
+function wrapper_CUDA_fft.my_2D_ifft_complex_to_real_batch(x,k,out)
+   
+   
+   local in_data = torch.data(x)
+   local in_data_cast = ffi.cast(fftwf_complex_cast, in_data)
+
+   local batch=x:nElement()/(2*x:size(k)*x:size(k+1))
+   
+   local type = cuFFT.C2R
+   
+   local in_data = torch.data(x)
+   local in_data_cast = ffi.cast(fftwf_complex_cast, in_data)
+   
+   
+   local fs = torch.LongStorage(x:nDimension()-1)
+   for l = 1, x:nDimension()-1 do
+      fs[l] = x:size(l)
+   end
+   
+   local output   
+      if(not out) then
+      output = torch.CudaTensor(fs):zero()
+   else
+      output = out
+   end
+
+
+   local output_data = torch.data(output);
+   local output_data_cast = ffi.cast('float*', output_data)
+  
+   -- The plan!
+
+   --[[-- SEGFAULT CAN COME FROM THOSE LINES ]]
+   if(wrapper_CUDA_fft.LUT[batch]==nil) then
+      wrapper_CUDA_fft.LUT[batch]={}
+   end
+   if(wrapper_CUDA_fft.LUT[batch][x:size(k)]==nil) then
+      wrapper_CUDA_fft.LUT[batch][x:size(k)]={}
+   end
+   if(wrapper_CUDA_fft.LUT[batch][x:size(k)][type]==nil) then
+      wrapper_CUDA_fft.LUT[batch][x:size(k)][type]=wrapper_CUDA_fft.cache(x,k,type)
+   end
+   local plan_cast=wrapper_CUDA_fft.LUT[batch][x:size(k)][type][0]
+
+
+   cuFFT.C['cufftExecC2R'](plan_cast,in_data_cast,output_data_cast)
+   --[[--------------------------------------]]
+      
+      
+   output:div(x:size(k)*x:size(k+1))   
+   
+   return output
+end
+
+
+
+
+function wrapper_CUDA_fft.my_2D_fft_complex(x,backward,out)   
 
    local in_data = torch.data(x)
    local in_data_cast = ffi.cast(fftwf_complex_cast, in_data)
    
    -- Output data: size and stride are identical      
-   local output = torch.CudaTensor(x:size(),x:stride()):zero()
+local output 
+   if(not out) then
+      output = torch.CudaTensor(x:size(),x:stride()):zero()
+   else
+      output=out
+end   
+
    local output_data = torch.data(output);
    local output_data_cast = ffi.cast(fftwf_complex_cast, output_data)
    
@@ -125,12 +196,8 @@ function wrapper_CUDA_fft.my_2D_fft_complex(x,backward)
       return output
 end
 
-function wrapper_CUDA_fft.my_2D_ifft_complex_to_real_batch_inplace(x,k,output)   
-   
-end
 
-
-function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)   
+function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k,out)   
    -- Defines a 2D convolution that batches until the k-th dimension
 
    local batch=x:nElement()/(x:size(k)*x:size(k+1))
@@ -146,15 +213,12 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
    
 
    fs[x:nDimension()+1] = 2
- 
-  -- local ss = torch.LongStorage(x:nDimension()+1)
---   for l = 1, x:nDimension() do
---      ss[l] = x:stride(l)*2
---   end
---   ss[x:nDimension()+1]=1
-
-      --   local output = torch.CudaTensor(fs,ss):zero()
-   local output = torch.CudaTensor(fs):zero()
+   local output 
+   if(not out) then
+      output = torch.CudaTensor(fs):zero()
+   else
+      output=out
+   end
    local output_data = torch.data(output);
    local output_data_cast = ffi.cast(fftwf_complex_cast, output_data)
    
@@ -198,7 +262,7 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k)
    -- If there is something to fill in ? IS IT ??
    if(n_el>0) then
       local subs_idx=output:narrow(k+1,n_med_kp1,n_el_kp1)
-      print(k+1)
+--      print(k+1)
       subs_idx:indexCopy(k+1,torch.range(n_el_kp1,1,-1):long(),output:narrow(k+1,2,n_el_kp1))
 --      local subs_subs_idx=subs_idx:narrow(k,n_med,n_el)
       

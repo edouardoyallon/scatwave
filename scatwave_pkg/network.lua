@@ -142,22 +142,24 @@ function network:allocate_inplace(mini_batch_dim)
    for r=1,filters.size:size(1) do
       local sz_r=concatenateLongStorage(mini_batch_dim,torch.LongStorage({filters.size[r][1],filters.size[r][2]}))
       local sz_c=concatenateLongStorage(mini_batch_dim,torch.LongStorage({filters.size[r][1],filters.size[r][2],2}))
-      self.ip.U1_r[r]=myTensor(sz_r)
-      self.ip.U2_r[r]=myTensor(sz_r)
-      self.ip.U1_c[r]=myTensor(sz_c)
-      self.ip.U2_c[r]=myTensor(sz_c)
+      self.ip.U1_r[r]=myTensor(sz_r):fill(0)
+      self.ip.U2_r[r]=myTensor(sz_r):fill(0)
+      self.ip.U1_c[r]=myTensor(sz_c):fill(0)
+      self.ip.U2_c[r]=myTensor(sz_c):fill(0)
       
    end
    
-   self.ip.S=myTensor(concatenateLongStorage(mini_batch_dim,torch.LongStorage({filters_ip.n_f,filters.size[filters.size:size(1)][1],filters.size[filters.size:size(1)][2]})))
+   self.ip.S=myTensor(concatenateLongStorage(mini_batch_dim,torch.LongStorage({filters_ip.n_f,filters.size[filters.size:size(1)][1],filters.size[filters.size:size(1)][2]}))):fill(0)
    
-   self.ip.xf=myTensor(concatenateLongStorage(mini_batch_dim,torch.LongStorage({filters.size[1][1],filters.size[1][2],2})))
+   self.ip.xf=myTensor(concatenateLongStorage(mini_batch_dim,torch.LongStorage({filters.size[1][1],filters.size[1][2],2}))):fill(0)
    
 end
 
 -- Here, we minimize the creation of memory to avoid using garbage collector
 function network:scat_inplace(image_input)
    assert(self.type==image_input:type(),'Not the correct type')
+
+
    local mini_batch = self.dimension_mini_batch
    local wrapper_fft=self.fft
    
@@ -173,20 +175,20 @@ function network:scat_inplace(image_input)
    local k=1
    local J=filters_ip.J
 
-    -- FFT of the input image
+   -- FFT of the input image
    wrapper_fft.my_2D_fft_real_batch(image_input,mini_batch,xf)
 
    -- Compute the multiplication with xf and the LF, store it in U1_c[1]
    complex.multiply_complex_tensor_with_real_tensor_in_place(xf,filters_ip.phi.signal[1],U1_c[1])
+--ds3=U1_c[1]:clone()
 
-   
    -- Compute the complex to real iFFT of U1_c[1] and store it in U1_r[1]
    wrapper_fft.my_2D_ifft_complex_to_real_batch(U1_c[1],mini_batch,U1_r[1])
 
    -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
 
-   ds=conv_lib.downsample_2D_inplace(U1_r[1],J-1,mini_batch,myTensor)
-   ds2=ds
+   ds=conv_lib.downsample_2D_inplace(U1_r[1],J,mini_batch,myTensor)
+   ds2=ds:clone()
 
    S:narrow(mini_batch,k,1):copy(ds)
    k=k+1
@@ -220,7 +222,7 @@ function network:scat_inplace(image_input)
       wrapper_fft.my_2D_ifft_complex_to_real_batch(U2_c[J1+1],mini_batch,U1_r[J1+1])
               
       -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
-      ds=conv_lib.downsample_2D_inplace(U1_r[J1+1],J-J1-1,mini_batch,myTensor)
+      ds=conv_lib.downsample_2D_inplace(U1_r[J1+1],J-J1,mini_batch,myTensor)
 
       S:narrow(mini_batch,k,1):copy(ds)
       k=k+1
@@ -255,7 +257,7 @@ function network:scat_inplace(image_input)
             wrapper_fft.my_2D_ifft_complex_to_real_batch(U2_c[J2+1],mini_batch,U2_r[J2+1])
 
  -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
-            ds=conv_lib.downsample_2D_inplace(U2_r[J2+1],J-J2-1,mini_batch,myTensor)
+            ds=conv_lib.downsample_2D_inplace(U2_r[J2+1],J-J2,mini_batch,myTensor)
             S:narrow(mini_batch,k,1):copy(ds)
             k=k+1
 
@@ -269,6 +271,134 @@ function network:scat_inplace(image_input)
 
    return S
 end
+
+
+
+
+
+
+
+function network:scat_inplace_DS(image_input)
+   assert(self.type==image_input:type(),'Not the correct type')
+
+
+   local mini_batch = self.dimension_mini_batch
+   local wrapper_fft=self.fft
+   
+   local myTensor=self.myTensor
+   local xf=self.ip.xf
+   local U1_c=self.ip.U1_c
+   local U1_r=self.ip.U1_r
+   local S=self.ip.S
+   local U2_c=self.ip.U2_c
+   local U2_r=self.ip.U2_r
+   local ds
+   local filters_ip = self.ip.filters
+   local k=1
+   local J=filters_ip.J
+
+   -- FFT of the input image
+   wrapper_fft.my_2D_fft_real_batch(image_input,mini_batch,xf)
+
+   -- Compute the multiplication with xf and the LF, store it in U1_c[1]
+   complex.multiply_complex_tensor_with_real_tensor_in_place(xf,filters_ip.phi.signal[1],U1_c[1])
+
+   -- Compute the complex to real iFFT of U1_c[1] and store it in U1_r[1]
+   complex.periodize_in_place(U1_c[1],J,mini_batch,U1_c[J+1])
+   
+   -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
+
+--   ds=conv_lib.downsample_2D_inplace(U1_r[1],J-1,mini_batch,myTensor)
+   ds=wrapper_fft.my_2D_ifft_complex_to_real_batch(U1_c[J+1],mini_batch,U1_r[J+1])
+   S:narrow(mini_batch,k,1):copy(ds)
+   k=k+1
+
+   for j1=1,#filters_ip.psi do
+      -- Compute the multiplication with xf and the filters which is real in Fourier, finally store it in U1_c[1]
+      local J1=filters_ip.psi[j1].j
+      complex.multiply_complex_tensor_with_real_tensor_in_place(xf,filters_ip.psi[j1].signal[1],U1_c[1])
+   
+      -- Since cuFFT is fast, we do not periodize the signal      
+      -- Compute the iFFT of U1_c[1], and store it in U1_c[1]      
+         complex.periodize_in_place(U1_c[1],J1,mini_batch,U1_c[J1+1])
+      wrapper_fft.my_2D_fft_complex_batch(U1_c[1],mini_batch,1,U1_c[1])
+      -- We subsample it manually by changing its stride and store the subsampling in U1_c[j1]
+      
+--      U1_c[J1+1]:copy(conv_lib.downsample_2D_inplace(U1_c[1],J1,mini_batch,myTensor))
+      -- Compute the modulus and store it in U1_r[j1]
+
+      complex.abs_value_inplace(U1_c[J1+1],U1_r[J1+1])
+
+      -- Compute the Fourier transform and store it in U1_c[j1]
+      wrapper_fft.my_2D_fft_real_batch(U1_r[J1+1],mini_batch,U1_c[J1+1])
+       
+      -- Compute the multiplication with U1_c[j1] and the LF, store it in U2_c[j1]
+      complex.multiply_complex_tensor_with_real_tensor_in_place(U1_c[J1+1],filters_ip.phi.signal[J1+1],U2_c[J1+1])
+
+      -- Compute the iFFT complex to real of U2_c[j1] and store it in U1_r[j1]
+        
+      complex.periodize_in_place(U2_c[J1+1],J-J1,mini_batch,U2_c[J+1])
+
+              
+      -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
+      ds=wrapper_fft.my_2D_ifft_complex_to_real_batch(U2_c[J+1],mini_batch,U1_r[J+1])
+      S:narrow(mini_batch,k,1):copy(ds)
+      k=k+1
+
+      for j2=1,#filters_ip.psi do
+        
+         -- for j2
+         if (filters_ip.psi[j2].j>filters_ip.psi[j1].j) then
+         local J2=filters_ip.psi[j2].j
+            -- Compute the multiplication with U1_c[j1] and the filters, and store it in U2_c[j1]
+            complex.multiply_complex_tensor_with_real_tensor_in_place(U1_c[J1+1],filters_ip.psi[j2].signal[J1+1],U2_c[J1+1])
+            
+                  complex.periodize_in_place(U2_c[J1+1],J2-J1,mini_batch,U2_c[J2+1])
+            --U2_c[J2+1]:copy(conv_lib.downsample_2D_inplace(U2_c[J1+1],J2-J1,mini_batch,myTensor))
+            -- Compute the iFFT of U2_c[j1], and store it in U2_c[j1]
+            wrapper_fft.my_2D_fft_complex_batch(U2_c[J2+1],mini_batch,1,U2_c[J2+1])         
+        
+               -- Subsample it and store it in U2_c[j2]
+               
+       
+            -- Compute the modulus and store it in U2_r[j2]
+            complex.abs_value_inplace(U2_c[J2+1],U2_r[J2+1])
+                         
+            -- Compute the Fourier transform of U2_r[j2] and store it in U2_c[j2]
+            wrapper_fft.my_2D_fft_real_batch(U2_r[J2+1],mini_batch,U2_c[J2+1])
+     
+            -- Compute the multiplication with U2_c[j2] and the LF, store it in U2_c[j2]    
+
+           -- print(U2_c[J2+1]:size())
+           -- print(filters_ip.phi.signal[J2+1]:size())
+            complex.multiply_complex_tensor_with_real_tensor_in_place(U2_c[J2+1],filters_ip.phi.signal[J2+1],U2_c[J2+1])
+
+            -- Compute the complex to real iFFT of U2_c[j2] and store it in U2_r[j2]
+        complex.periodize_in_place(U2_c[J2+1],J-J2,mini_batch,U2_c[J+1])          
+          ds=wrapper_fft.my_2D_ifft_complex_to_real_batch(U2_c[J+1],mini_batch,U2_r[J+1])
+
+ -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
+--            ds=conv_lib.downsample_2D_inplace(U2_r[J2+1],J-J2-1,mini_batch,myTensor)
+            S:narrow(mini_batch,k,1):copy(ds)
+            k=k+1
+
+     end
+   end
+      end
+      
+      --
+      
+
+
+   return S
+end
+
+
+
+
+
+
+
 
 -- Usual scattering
 function network:scat(image_input)

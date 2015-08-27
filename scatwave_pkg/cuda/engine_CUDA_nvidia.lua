@@ -45,6 +45,10 @@ extern cufftResult cufftExecR2C(cufftHandle plan,
                                   cufftReal *idata,
                                   cufftComplex *odata);
 
+extern cufftResult cufftExecC2R(cufftHandle plan, 
+                                  cufftComplex *idata,
+                                  cufftReal *odata);
+
 extern cufftResult cufftDestroy(cufftHandle plan);
 
 extern cufftResult cufftGetVersion(int *version);

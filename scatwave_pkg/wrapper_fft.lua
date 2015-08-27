@@ -47,7 +47,7 @@ function wrapper_fft.my_2D_fft_complex_batch(x,k,backward,out)
    -- The plan!
    
 --[[-- SEGFAULT CAN COME FROM THOSE LINES ]]
-   local plan =    fftw.C['fftwf_plan_many_dft'](2, dims, batch,in_data_cast, dims, istride,idist,output_data_cast, dims,istride,odist,sign, flags)
+   local plan = fftw.C['fftwf_plan_many_dft'](2, dims, batch,in_data_cast, dims, istride,idist,output_data_cast, dims,istride,odist,sign, flags)
    fftw.C['fftwf_execute'](plan)
    fftw.C['fftwf_destroy_plan'](plan)   
 --[[--------------------------------------]]

@@ -45,16 +45,31 @@ function unit_test_scatnet.my_fft()
    local iff2 = my_fft.my_2D_fft_complex(ff2,1)
    
    local res = torch.squeeze(torch.sum(torch.sum(complex.abs_value(playing2-iff2),1),2))
+   
+
+   
 
    tester:assertlt(res,TOL,'complex IFFT and FFT not equal: ')
    tester:assertlt(torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(torch.abs(iff-playing),1),2),3),4)),TOL,'batched IFFT and FFT not equal: ')
    tester:assertlt(torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(complex.abs_value(ff3-ff),1),2),3),4)),TOL,'batched FFT real and complex FFT of a real signal not equal: ')
    
+   -- check that inplace does work
+   local ff_copy=torch.FloatTensor(ff):fill(0)
+   
+   my_fft.my_2D_fft_real_batch(playing,3,ff_copy)
+   res = torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(complex.abs_value(ff-ff_copy),1),2),3),4))
+
+   tester:assertlt(res,TOL,'inplace real FFT does not work ')
+   
+
+   
      -- Check that complex to real FFT is working...
    local playing4 = my_fft.my_2D_ifft_complex_to_real_batch(ff,3)
    local res3 = torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(playing-playing4,1),2),3),4))
    
-      tester:assertlt(res3,TOL,'complex to real IFFT and real not equal: ')
+   tester:assertlt(res3,TOL,'complex to real IFFT and real not equal: ')
+   
+
 
 end
 

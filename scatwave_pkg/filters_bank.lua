@@ -28,9 +28,9 @@ end
 
 
 function get_padding_size(N,M,max_ds,J)
-   local sz=torch.LongTensor(J,2)
+   local sz=torch.LongTensor(J+1,2)
 
-   for res=0,J-1 do
+   for res=0,J do
    local N_p=2^J*torch.ceil((N+2*2^J)/2^J)
    N_p=torch.max(torch.Tensor({{N_p,1}}))/2^res
 
@@ -94,8 +94,8 @@ function filters_bank.morlet_filters_bank_2D(N,M,J,my_fft,myTensor)
 
    filters.phi.signal[1]=complex.realize_inplace(my_fft.my_2D_fft_complex(filters.phi.signal[1]))--my_fft.my_fft_complex(my_fft.my_fft_complex(filters.phi.signal[1],1),2)    
       
-   for res=2,res_MAX do
-      filters.phi.signal[res]=conv_lib.periodize_along_k(conv_lib.periodize_along_k(filters.phi.signal[1],1,res-1),2,res-1)
+   for res=2,res_MAX+1 do
+      filters.phi.signal[res]=reduced_res(reduced_res(filters.phi.signal[1],res-1,2,myTensor),res-1,1,myTensor)--conv_lib.periodize_along_k(conv_lib.periodize_along_k(filters.phi.signal[1],1,res-1),2,res-1)
    end
    
    filters.phi.j=J   

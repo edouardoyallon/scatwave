@@ -20,7 +20,7 @@ end
 function complex.abs_value_inplace(x,out)
    x:cmul(x)
    out:fill(0)
-   out:add(x:narrow(x:nDimension(),1,1),x:narrow(x:nDimension(),2,1))
+   out:add(x:select(x:nDimension(),1),x:select(x:nDimension(),2))
 --   x:narrow(x:nDimension)
 end
 

@@ -86,14 +86,14 @@ function conv_lib.periodize_along_k(h,k,l,nonorm)
    return summed_h
 end
 
-function conv_lib.downsample_2D_inplace(x,ds,mini_batch,myTensor)
+function conv_lib.downsample_2D_inplace(x,j,mini_batch,myTensor)
 local st=x:stride()
    st[mini_batch]=2^j*st[mini_batch]
-   st[1+mini_batch]=2^j*st[mini_batch]
+   st[1+mini_batch]=2^j*st[mini_batch+1]
    local s=x:size()
    s[mini_batch]=s[mini_batch]/2^j
-s[1+mini_batch]=s[1+mini_batch]/2^j
-   return myTensor(x:storage(),s,st)
+   s[1+mini_batch]=s[1+mini_batch]/2^j
+   return myTensor(x:storage(),x:storageOffset(),s,st)
 end
 
 return conv_lib

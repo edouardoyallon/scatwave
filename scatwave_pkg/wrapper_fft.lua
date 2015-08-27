@@ -193,7 +193,7 @@ function wrapper_fft.my_2D_fft_real_batch(x,k,out)
    
    
    local output
-      if(not out) then
+   if(not out) then
       output = torch.FloatTensor(fs,ss):zero()
    else
       output=out

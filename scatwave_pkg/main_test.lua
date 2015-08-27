@@ -22,5 +22,5 @@ x=x:float()
 
 -- Let's try to get the scattering coefficients
 sys.tic()
-z=y:scat(x)
+z=y:scat_inplace(x)
 print(sys.toc())

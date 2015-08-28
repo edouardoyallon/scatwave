@@ -94,6 +94,13 @@ function unit_test_scatnet.my_fft_CUDA()
    local res=torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(complex.abs_value(ff-ff_c),1),2),3),4))
    local res2=torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(complex.abs_value(ff2_c-ff2_c),1),2),3),4))
    
+   local iff = my_fft.my_2D_ifft_complex_to_real_batch(ff,3)
+   local iff_c = my_fft_CUDA.my_2D_ifft_complex_to_real_batch(ff_c:cuda(),3)
+   
+   iff_c=iff_c:float()
+
+   local res3=torch.squeeze(torch.sum(torch.sum(torch.sum(torch.sum(iff-iff_c,1),2),3),4))
+
    tester:assertlt(res,TOL,'real CUDA FFT and non CUDA are not equal')
    tester:assertlt(res2,TOL,'complex CUDA FFT are not equal')
 end

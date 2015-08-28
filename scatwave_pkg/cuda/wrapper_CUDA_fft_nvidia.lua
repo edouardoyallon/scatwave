@@ -203,6 +203,8 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k,out)
    local batch=x:nElement()/(x:size(k)*x:size(k+1))
    local type = cuFFT.R2C
   
+   
+   
    local in_data = torch.data(x)
    local in_data_cast = ffi.cast('float*', in_data)
 
@@ -249,10 +251,6 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k,out)
    cuFFT.C['cufftExecR2C'](plan_cast,in_data_cast,output_data_cast)
    --[[--------------------------------------]]
    
-   
-   
-   
-
    local n_el=x:size(k)-1
    local n_med=2
    
@@ -261,10 +259,13 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k,out)
    
    -- If there is something to fill in ? IS IT ??
    if(n_el>0) then
-      local subs_idx=output:narrow(k+1,n_med_kp1,n_el_kp1)
---      print(k+1)
-      subs_idx:indexCopy(k+1,torch.range(n_el_kp1,1,-1):long(),output:narrow(k+1,2,n_el_kp1))
---      local subs_subs_idx=subs_idx:narrow(k,n_med,n_el)
+    --  local subs_idx=output:narrow(k+1,n_med_kp1,n_el_kp1)
+      
+--      local slice2reverse=output:narrow(k+1,2,n_el_kp1)
+--      local my_view=torch.CudaTensor(slice2reverse:storage(),slice2reverse:storageOffset(),size_weird,stride_weird)
+--      print(torch.squeeze(subs_idx:narrow(subs_idx:nDimension(),1,1)))
+--      subs_idx:copy(my_view)
+     --subs_idx:indexCopy(k+1,torch.range(1,n_el_kp1,1):long(),slice2reverse)--     local subs_subs_idx=subs_idx:narrow(k,n_med,n_el)
       
   --    local tmp=torch.CudaTensor(subs_subs_idx:size(),subs_subs_idx:stride()) -- hard to avoid, because there are some funny memory conflicts...
 --      tmp:indexCopy(k,torch.range(x:size(k)-1,1,-1):long(),subs_subs_idx)

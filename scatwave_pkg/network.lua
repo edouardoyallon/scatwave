@@ -139,11 +139,12 @@ function network:allocate_inplace(mini_batch_dim)
    self.ip.U1_r={}
    self.ip.U2_c={}
    self.ip.U2_r={}
-   
+   self.ip.TMP_cuda_buggy={}   
    for r=1,filters.size:size(1) do
       local sz_r=concatenateLongStorage(mini_batch_dim,torch.LongStorage({filters.size[r][1],filters.size[r][2]}))
       local sz_c=concatenateLongStorage(mini_batch_dim,torch.LongStorage({filters.size[r][1],filters.size[r][2],2}))
       self.ip.U1_r[r]=myTensor(sz_r):fill(0)
+      self.ip.TMP_cuda_buggy[r]=myTensor(sz_c):fill(0)
       self.ip.U2_r[r]=myTensor(sz_r):fill(0)
       self.ip.U1_c[r]=myTensor(sz_c):fill(0)
       self.ip.U2_c[r]=myTensor(sz_c):fill(0)
@@ -186,15 +187,18 @@ function network:scat_inplace(image_input)
    local filters_ip = self.ip.filters
    local k=1
    local J=filters_ip.J
-   
+      local TMP= self.ip.TMP_cuda_buggy
    local decay_x=2--torch.floor((filters_ip.size[filters_ip.size:size(1)][1]*2^J-S:size(mini_batch+1))/2^(J+1))+1   
    local decay_y=2--torch.floor((filters_ip.size[filters_ip.size:size(1)][2]*2^J-S:size(mini_batch+2))/2^(J+1))+1         
       
       
       
       -- FFT of the input image
-      wrapper_fft.my_2D_fft_real_batch(image_input,mini_batch,xf)
-   
+      --      wrapper_fft.my_2D_fft_real_batch(x,mini_batch,xf)    
+
+ TMP[1]:narrow(TMP[1]:nDimension(),1,1):copy(x)      
+wrapper_fft.my_2D_fft_complex_batch(TMP[1],mini_batch,nil,xf)
+   DS=TMP[1]:clone()
    -- Compute the multiplication with xf and the LF, store it in U1_c[1]
    complex.multiply_complex_tensor_with_real_tensor_in_place(xf,filters_ip.phi.signal[1],U1_c[1])
    --ds3=U1_c[1]:clone()
@@ -205,9 +209,7 @@ function network:scat_inplace(image_input)
    -- Store the downsample in S[k] where k is the corresponding position in the memory, k<-k+1
    
    ds=conv_lib.downsample_2D_inplace(U1_r[1],J,mini_batch,myTensor)
-   print(S:size())
-   print(decay_y)
-   print(ds:size())
+
    
    S:narrow(mini_batch,k,1):copy(ds:narrow(mini_batch,decay_x,S:size(mini_batch+1)):narrow(mini_batch+1,decay_y,S:size(mini_batch+2)))
    k=k+1
@@ -228,12 +230,11 @@ function network:scat_inplace(image_input)
       complex.abs_value_inplace(U1_c[J1+1],U1_r[J1+1])
       
       -- Compute the Fourier transform and store it in U1_c[j1]
-      wrapper_fft.my_2D_fft_real_batch(U1_r[J1+1],mini_batch,U1_c[J1+1])
+      --      wrapper_fft.my_2D_fft_real_batch(U1_r[J1+1],mini_batch,U1_c[J1+1])
+ TMP[J1+1]:narrow(TMP[J1+1]:nDimension(),1,1):copy(U1_r[J1+1])      
+wrapper_fft.my_2D_fft_complex_batch(TMP[J1+1],mini_batch,nil,U1_c[J1+1])
       
       -- Compute the multiplication with U1_c[j1] and the LF, store it in U2_c[j1]
-      --  print(U1_c[J1+1]:size())
-      -- print(U2_c[J1+1]:size())
-      --print(filters_ip.phi.signal[J1+1]:size())
       complex.multiply_complex_tensor_with_real_tensor_in_place(U1_c[J1+1],filters_ip.phi.signal[J1+1],U2_c[J1+1])
       
       -- Compute the iFFT complex to real of U2_c[j1] and store it in U1_r[j1]
@@ -284,8 +285,7 @@ function network:scat_inplace(image_input)
       end
    end
    
-   --
-   print(k-1)
+
    
    
    return S
@@ -318,14 +318,16 @@ function network:scat_inplace_DS(image_input)
    local filters_ip = self.ip.filters
    local k=1
    local J=filters_ip.J
-   
+         local TMP= self.ip.TMP_cuda_buggy
    
    local decay_x=2--torch.floor((filters_ip.size[filters_ip.size:size(1)][1]*2^J-S:size(mini_batch+1))/2^(J+1))+1   
    local decay_y=2--torch.floor((filters_ip.size[filters_ip.size:size(1)][2]*2^J-S:size(mini_batch+2))/2^(J+1))+1         
 
       -- FFT of the input image
-      wrapper_fft.my_2D_fft_real_batch(image_input,mini_batch,xf)
-
+--      wrapper_fft.my_2D_fft_real_batch(x,mini_batch,xf)
+ TMP[1]:narrow(TMP[1]:nDimension(),1,1):copy(x)      
+wrapper_fft.my_2D_fft_complex_batch(TMP[1],mini_batch,nil,xf)
+   
    -- Compute the multiplication with xf and the LF, store it in U1_c[1]
    complex.multiply_complex_tensor_with_real_tensor_in_place(xf,filters_ip.phi.signal[1],U1_c[1])
    
@@ -357,7 +359,9 @@ function network:scat_inplace_DS(image_input)
       complex.abs_value_inplace(U1_c[J1+1],U1_r[J1+1])
       
       -- Compute the Fourier transform and store it in U1_c[j1]
-      wrapper_fft.my_2D_fft_real_batch(U1_r[J1+1],mini_batch,U1_c[J1+1])
+      --      wrapper_fft.my_2D_fft_real_batch(U1_r[J1+1],mini_batch,U1_c[J1+1])
+ TMP[J1+1]:narrow(TMP[J1+1]:nDimension(),1,1):copy(U1_r[J1+1])      
+wrapper_fft.my_2D_fft_complex_batch(TMP[J1+1],mini_batch,nil,U1_c[J1+1])
       
       -- Compute the multiplication with U1_c[j1] and the LF, store it in U2_c[j1]
       complex.multiply_complex_tensor_with_real_tensor_in_place(U1_c[J1+1],filters_ip.phi.signal[J1+1],U2_c[J1+1])

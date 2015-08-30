@@ -1,5 +1,5 @@
-local conv_lib = require 'conv_lib'
-local complex = require 'complex'
+local conv_lib = require 'scatwave.conv_lib'
+local complex = require 'scatwave.complex'
 
 local filters_bank ={}
 

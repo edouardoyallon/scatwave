@@ -1,6 +1,6 @@
 local complex = {}
 require 'torch'
-local tools= require 'tools'
+local tools= require 'scatwave.tools'
 
 
 function complex.unit_complex(alpha)

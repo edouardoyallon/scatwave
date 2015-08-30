@@ -1,10 +1,10 @@
 local ffi=require 'ffi'
-local fftw = require 'engine'
+local fftw = require 'scatwave.engine'
 local fftwf_complex_cast = 'fftwf_complex*'
 local fftw_dim_cast='fftw_iodim[?]'
-local tools=require 'tools'
+local tools=require 'scatwave.tools'
 local fftwf=fftw.float
-local complex = require 'complex'
+
 
 local wrapper_fft={}
 

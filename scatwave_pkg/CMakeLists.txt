@@ -11,4 +11,13 @@ ENDIF()
 
 
 FILE(GLOB luasrc *.lua)
-ADD_TORCH_PACKAGE(scatwave "" "${luasrc}" "ScatWave package")
+FILE(GLOB luasrc_cuda cuda/*.lua)
+
+
+
+INSTALL(
+  FILES
+  ${luasrc_cuda}
+  DESTINATION "${Torch_INSTALL_LUA_PATH_SUBDIR}/scatwave/cuda")
+
+ADD_TORCH_PACKAGE(scatwave ""  "${luasrc}" "ScatWave toolbox")

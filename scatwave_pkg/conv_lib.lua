@@ -1,12 +1,12 @@
 local conv_lib={}
-local tools=require 'tools'
+local tools=require 'scatwave.tools'
 --local ffi=require 'ffi'
 --local fftw = require 'fftw3'
 --local fftw_complex_cast = 'fftw_complex*'
-local tools=require 'tools'
+
 --local my_fft = require 'my_fft'
 
-local complex = require 'complex'
+local complex = require 'scatwave.complex'
 
 function conv_lib.my_convolution_2d(x,filt,ds,mini_batch,my_fft,myTensor)
    assert(tools.is_complex(x),'The signal should be complex')

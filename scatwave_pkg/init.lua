@@ -4,7 +4,7 @@ require 'torch'
 local ScatNet = {}
 
 
-ScatNet.network = require 'network'
+ScatNet.network = require 'scatwave.network'
 
 
 return ScatNet

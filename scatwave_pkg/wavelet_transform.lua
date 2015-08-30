@@ -1,7 +1,7 @@
-local complex = require 'complex'
-local conv_lib = require 'conv_lib'
+local complex = require 'scatwave.complex'
+local conv_lib = require 'scatwave.conv_lib'
 
-local filters_bank=require 'filters_bank'
+local filters_bank=require 'scatwave.filters_bank'
 
 local wavelet_transform={}
 

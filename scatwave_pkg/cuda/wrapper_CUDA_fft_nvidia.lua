@@ -2,7 +2,7 @@ local wrapper_CUDA_fft={}
 local ffi=require 'ffi'
 local fftwf_complex_cast = 'fftwf_complex*'
 
-local cuFFT=require 'cuda/engine_CUDA_nvidia'
+local cuFFT=require 'scatwave.cuda/engine_CUDA_nvidia'
 
 
 wrapper_CUDA_fft.LUT={}

@@ -1,7 +1,7 @@
-local complex = require 'complex'
-local filters_bank = require 'filters_bank'
-local wavelet_transform = require 'wavelet_transform'
-local conv_lib = require 'conv_lib'
+local complex = require 'scatwave.complex'
+local filters_bank = require 'scatwave.filters_bank'
+local wavelet_transform = require 'scatwave.wavelet_transform'
+local conv_lib = require 'scatwave.conv_lib'
 local network = torch.class('network')
 
 
@@ -14,7 +14,7 @@ function network:__init(M,N,J,dimension_mini_batch)
    self.type='torch.FloatTensor'
    self.myTensor=torch.FloatTensor
    self.dimension_mini_batch=dimension_mini_batch or 1
-   self.fft=require 'wrapper_fft'   
+   self.fft=require 'scatwave.wrapper_fft'   
       self.filters=filters_bank.morlet_filters_bank_2D(self.N,self.M,self.J,self.fft,self.myTensor)
 end
 
@@ -36,7 +36,7 @@ function network:cuda()
       end
    end
    
-   self.fft = require 'cuda/wrapper_CUDA_fft_nvidia'
+   self.fft = require 'scatwave.cuda/wrapper_CUDA_fft_nvidia'
 end
 
 function network:float()

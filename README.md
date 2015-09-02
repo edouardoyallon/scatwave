@@ -12,10 +12,17 @@ Assuming Torch is already installed on your computer, simply cd in scatwave_pkg,
 # Few results...
 
 With this incorrect implementation and a buggy NN script(out of the confusion matrix script that I did not write) : 75%
-20ms/image for 256x256 images
+20ms/image for 256x256 images for the inplace version
+
+# Usage
+
+scatwave = require 'scatwave'
+x=torch.FloatTensor(128,3,32,32)
+scat = scatwave.network.new(3,x:size())
+
 
 # Contributors
 
-Michael Aghbal, Mathieux Andreux, Carmine Cella, Vincent Lostanlen, Edouard Oyallon. Contacts: surname.name@ens.fr
+Mathieux Andreux, Carmine Cella, Vincent Lostanlen, Edouard Oyallon. Contacts: surname.name@ens.fr
 
 Team DATA - Ecole Normale Supérieure

@@ -9,4 +9,19 @@ function tools.are_equal_dimension(x,y)
 end
   
 
+function tools.concatenateLongStorage(x,y)
+      if(not x) then
+         return y
+      else
+         local z=torch.LongStorage(#x+#y)
+         for i=1,#x do
+            z[i]=x[i]
+         end   
+         for i=1,#y do
+            z[i+#x]=y[i]
+         end
+         return z
+      end
+   end
+
 return tools

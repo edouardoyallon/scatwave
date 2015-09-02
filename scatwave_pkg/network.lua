@@ -8,16 +8,29 @@ local network = torch.class('network')
 function network:__init(J,U0_dim)
    self.J=J or 3
    self.type='torch.FloatTensor'
+   
    self.U0_dim=U0_dim or torch.LongTensor()
+
    self.fft=require 'scatwave.wrapper_fft'   
-      self.filters=filters_bank.morlet_filters_bank_2D(self.N,self.M,self.J,self.fft)
+      
+      self.filters=filters_bank.morlet_filters_bank_2D(U0_dim,self.J,self.fft)
    
    -- Allocate temporary variables
    local size_multi_res=self.filters.size_multi_res
    
-   function allocate_multi_res(x)
+   function allocate_multi_res(isComplex)
       x={}
+      
       for r=1,size_multi_res:size(1) do
+         
+         local s
+            if(isComplex) then
+            s = tools.concatenateLongStorage(size_multi_res[r],torch.LongStorage({2}))
+         else
+            s=size_multi_res[r]
+         end
+
+
          x[r]=torch.FloatTensor(size_multi_res[r]):fill(0)
       end
       return x
@@ -27,18 +40,20 @@ function network:__init(J,U0_dim)
    
    
    -- Input signal
-   self.U0_r_1= -- Auxiliary variable for padding because Torch is not efficient enough
-   local U0_r_2 = self.U0_r_2     
-   local U0_c = self.U0_c
+   local size_r_2 = U0_dim
+   size_r_2[U0_dim:nDimension()-1]=size_multi_res[1][U0_dim:nDimension()-1]
+   self.U0_r_1 = torch.FloatTensor(U0_dim):fill(0) -- Auxiliary variable for padding because Torch is not efficient enough
+      self.U0_r_2  = torch.FloatTensor(size_r_2):fill(0)
+      self.U0_c = torch.FloatTensor(size_multi_res[r]):fill(0)
    
    -- First layer temporary variables
-   local U1_c = self.U1_c
-   local U1_r = self.U1_r
+   self.U1_c = allocate_multi_res(1)
+   self.U1_r = allocate_multi_res()
 
    -- Second layer temporary variables
-   local U2_c = self.U2_c
-   local U2_r = self.U2_r
-   
+   self.U2_c = allocate_multi_res(1)
+   self.U2_r = allocate_multi_res()
+
 end
 
 
@@ -93,20 +108,7 @@ function network:allocate_inplace(mini_batch_dim)
    filters_ip.psi={}
    filters_ip.phi={}
    
-   local function concatenateLongStorage(x,y)
-      if(not x) then
-         return y
-      else
-         local z=torch.LongStorage(#x+#y)
-         for i=1,#x do
-            z[i]=x[i]
-         end   
-         for i=1,#y do
-            z[i+#x]=y[i]
-         end
-         return z
-      end
-   end
+  
    
    for i=1,#filters.psi do
       filters_ip.psi[i]={}

@@ -27,9 +27,9 @@ end
 
 
 
-function get_padding_size(N,M,max_ds,J)
+function get_multires_size(s,max_res)
    local sz=torch.LongTensor(J+1,2)
-   
+   local J=max_res
    for res=0,J do
       local N_p=2^J*torch.ceil((N+2*2^J)/2^J)
       N_p=torch.max(torch.Tensor({{N_p,1}}))/2^res
@@ -42,14 +42,14 @@ function get_padding_size(N,M,max_ds,J)
    return sz
 end
 
-function reduced_res(x,res,k,myTensor)
+function reduced_res(x,res,k)
    local s=x:stride()
    for l=1,#s do
       if not l==k then
          s[l]=0
       end
    end
-   local mask = myTensor(x:size(),s):fill(1) -- Tensor
+   local mask = torch.FloatTensor(x:size(),s):fill(1) -- Tensor
       
    local z=mask:narrow(k,x:size(k)*2^(-res-1)+1,x:size(k)*(1-2^(-res))+1):fill(0)
    
@@ -58,28 +58,24 @@ function reduced_res(x,res,k,myTensor)
    return conv_lib.periodize_along_k(y,k,res,1)
 end
 
-function filters_bank.morlet_filters_bank_2D_inplace(N,M,J,my_fft,myTensor)
-   
-end
-
-function filters_bank.morlet_filters_bank_2D(N,M,J,my_fft,myTensor)
+function filters_bank.morlet_filters_bank_2D(U0_dim,J,fft)
    local filters={}
    
    local i=1
    --   local my_fft=scat.fft
-   filters.size=get_padding_size(N,M,J,J) -- min padding should be a power of 2
+   filters.size_multi_res=get_padding_size(,J) -- min padding should be a power of 2
       filters.psi={}
-   filters.J=J
+
    local res_MAX=J
    for j=0,J-1 do
       for theta=1,8 do
          filters.psi[i]={}
          filters.psi[i].signal = {}
          
-         filters.psi[i].signal[1] = morlet_2d(filters.size[1][1], filters.size[1][2], 0.8*2^j, 0.5, 3/4*3.1415/2^j, theta*3.1415/8, 0, 1,my_fft,myTensor)
-         filters.psi[i].signal[1] = complex.realize_inplace(my_fft.my_2D_fft_complex(filters.psi[i].signal[1]))
+         filters.psi[i].signal[1] = morlet_2d(filters.size[1][1], filters.size[1][2], 0.8*2^j, 0.5, 3/4*3.1415/2^j, theta*3.1415/8, 0, 1,my_fft)
+         filters.psi[i].signal[1] = complex.realize(my_fft.my_2D_fft_complex(filters.psi[i].signal[1]))
          for res=2,j+1 do--res_MAX do
-            filters.psi[i].signal[res]=reduced_res(reduced_res(filters.psi[i].signal[1],res-1,2,myTensor),res-1,1,myTensor)--conv_lib.periodize_along_k(conv_lib.periodize_along_k(filters.psi[i].signal[1], 1, res-1), 2, res-1)
+            filters.psi[i].signal[res]=reduced_res(reduced_res(filters.psi[i].signal[1],res-1,2),res-1,1)
                
          end
          
@@ -92,7 +88,7 @@ function filters_bank.morlet_filters_bank_2D(N,M,J,my_fft,myTensor)
    filters.phi.signal={}
    filters.phi.signal[1]=gabor_2d(filters.size[1][1], filters.size[1][2], 0.8*2^(J-1), 1, 0, 0, 0, 1,my_fft,myTensor)
    
-   filters.phi.signal[1]=complex.realize_inplace(my_fft.my_2D_fft_complex(filters.phi.signal[1]))--my_fft.my_fft_complex(my_fft.my_fft_complex(filters.phi.signal[1],1),2)    
+   filters.phi.signal[1]=complex.realize(my_fft.my_2D_fft_complex(filters.phi.signal[1]))--my_fft.my_fft_complex(my_fft.my_fft_complex(filters.phi.signal[1],1),2)    
       
    for res=2,res_MAX+1 do
       filters.phi.signal[res]=reduced_res(reduced_res(filters.phi.signal[1],res-1,2,myTensor),res-1,1,myTensor)--conv_lib.periodize_along_k(conv_lib.periodize_along_k(filters.phi.signal[1],1,res-1),2,res-1)
@@ -111,7 +107,7 @@ function meshgrid(x,y) -- identical to MATLAB
 end
 
 
-function gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift,my_fft,myTensor)  
+function gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift) 
    
    local wv=myTensor(N,M,2)  
    local R=myTensor({{torch.cos(theta),-torch.sin(theta)},{torch.sin(theta),torch.cos(theta)}}) -- conversion to the axis..
@@ -153,13 +149,13 @@ function gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift,my_fft,myTensor)
 end
 
 
-function morlet_2d(M,N,sigma,slant,xi,theta,offset,fft_shift,my_fft,myTensor)
+function morlet_2d(M,N,sigma,slant,xi,theta,offset,fft_shift)
    
-   local wv=gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift,my_fft,myTensor)  
-   local g_modulus=complex.realize(gabor_2d(M,N,sigma,slant,0,theta,offset,fft_shift,my_fft,myTensor))  
+   local wv=gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift)
+   local g_modulus=complex.realize(gabor_2d(M,N,sigma,slant,0,theta,offset,fft_shift))
    local K=torch.squeeze(torch.sum(torch.sum(wv,1),2))/(torch.squeeze(torch.sum(torch.sum(g_modulus,1),2)))
    
-   local mor=wv-complex.multiply_complex_number_and_real_tensor(K,g_modulus,myTensor)
+   local mor=wv-complex.multiply_complex_number_and_real_tensor(K,g_modulus)
    
    return mor
 end

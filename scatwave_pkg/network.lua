@@ -100,7 +100,7 @@ end
 
 -- Here, we minimize the creation of memory to avoid using garbage collector
 function network:scat(U0_r,doPeriodize)
---   assert(U0_r:isSize(self.U0_dim),'Not the correct specified input size') -- Does not exist with cuda tensor..
+   --   assert(U0_r:isSize(self.U0_dim),'Not the correct specified input size') -- Does not exist with cuda tensor..
    assert(U0_r:isContiguous(),'Input tensor is not contiguous')
    
    -- Routines used for the computations
@@ -170,17 +170,24 @@ function network:scat(U0_r,doPeriodize)
       complex.multiply_complex_tensor_with_real_tensor_in_place(U0_c,filters.psi[j1].signal[1],U1_c[1])
       
       
+      
       if(doPeriodize) then
-         -- Compute the complex to real iFFT of U1_c[1] and store it in U1_r[1]
-         complex.periodize_in_place(U1_c[1],J,mini_batch_ndim,U1_c[J+1])
-         -- Compute the iFFT of U1_c[J+1], and store it in U1_r[J+1]      
-         fft.my_2D_ifft_complex_to_real_batch(U1_c[J+1],mini_batch_ndim,U1_r[J+1])
+         if(j1==1) then
+            DEBUG_=U1_c[1]:clone()
+         end
+         if(J1>1) then
+            complex.periodize_in_place(U1_c[1],J1,mini_batch_ndim,U1_c[J1+1]) 
+         end
+         
+         fft.my_2D_fft_complex_batch(U1_c[J1+1],mini_batch_ndim,1,U1_c[J1+1])
+         
       else
          -- Compute the iFFT of U1_c[1], and store it in U1_c[1]      
          fft.my_2D_fft_complex_batch(U1_c[1],mini_batch_ndim,1,U1_c[1])
          -- We subsample it manually by changing its stride and store the subsampling in U1_c[j1]      
          U1_c[J1+1]:copy(conv_lib.downsample_2D_inplace(U1_c[1],J1,mini_batch_ndim))
       end
+      
       
       -- Compute the modulus and store it in U1_r[j1]
       complex.abs_value_inplace(U1_c[J1+1],U1_r[J1+1])
@@ -190,12 +197,14 @@ function network:scat(U0_r,doPeriodize)
       TMP[J1+1]:narrow(TMP[J1+1]:nDimension(),1,1):copy(U1_r[J1+1])      
          fft.my_2D_fft_complex_batch(TMP[J1+1],mini_batch_ndim,nil,U1_c[J1+1])
       
+      
       -- Compute the multiplication with U1_c[j1] and the LF, store it in U2_c[j1]
       complex.multiply_complex_tensor_with_real_tensor_in_place(U1_c[J1+1],filters.phi.signal[J1+1],U2_c[J1+1])
       
-      if(doPeriodize) then      
-         complex.periodize_in_place(U2_c[J1+1],J-J1,mini_batch_ndim,U2_c[J+1])
-         fft.my_2D_ifft_complex_to_real_batch(U2_c[J+1],mini_batch_ndim,U1_r[J+1])
+      if(doPeriodize) then            
+         complex.periodize_in_place(U2_c[J1+1],J-J1,mini_batch_ndim,U1_c[J+1])
+         
+         fft.my_2D_ifft_complex_to_real_batch(U1_c[J+1],mini_batch_ndim,U1_r[J+1])
          S_r:narrow(mini_batch_ndim,count_S_r,1):copy(unpad_output_signal(U1_r[J+1]))
       else
          -- Compute the iFFT complex to real of U2_c[j1] and store it in U1_r[j1]
@@ -211,15 +220,23 @@ function network:scat(U0_r,doPeriodize)
             -- Compute the multiplication with U1_c[j1] and the filters, and store it in U2_c[j1]
             complex.multiply_complex_tensor_with_real_tensor_in_place(U1_c[J1+1],filters.psi[j2].signal[J1+1],U2_c[J1+1])
             
-            -- Compute the iFFT of U2_c[j1], and store it in U2_c[j1]
-            fft.my_2D_fft_complex_batch(U2_c[J1+1],mini_batch_ndim,1,U2_c[J1+1])         
-               
-               -- Subsample it and store it in U2_c[j2]
-               U2_c[J2+1]:copy(conv_lib.downsample_2D_inplace(U2_c[J1+1],J2-J1,mini_batch_ndim))
+            
+            if(doPeriodize) then     
+               complex.periodize_in_place(U2_c[J1+1],J2-J1,mini_batch_ndim,U2_c[J2+1])
+               fft.my_2D_fft_complex_batch(U2_c[J2+1],mini_batch_ndim,1,U2_c[J2+1])
+            else
+               -- Compute the iFFT of U2_c[j1], and store it in U2_c[j1]
+               fft.my_2D_fft_complex_batch(U2_c[J1+1],mini_batch_ndim,1,U2_c[J1+1])         
+                  
+                  -- Subsample it and store it in U2_c[j2]
+                  U2_c[J2+1]:copy(conv_lib.downsample_2D_inplace(U2_c[J1+1],J2-J1,mini_batch_ndim))
+            end
+            
             
             -- Compute the modulus and store it in U2_r[j2]
             complex.abs_value_inplace(U2_c[J2+1],U2_r[J2+1])
-            DEBUG=U2_r[J2+1]:clone()
+            
+            
             -- Compute the Fourier transform of U2_r[j2] and store it in U2_c[j2]
             --fft.my_2D_fft_real_batch(U2_r[J2+1],mini_batch_ndim,U2_c[J2+1])
             TMP[J2+1]:narrow(TMP[J2+1]:nDimension(),1,1):copy(U2_r[J2+1])      
@@ -227,6 +244,8 @@ function network:scat(U0_r,doPeriodize)
             
             -- Compute the multiplication with U2_c[j2] and the LF, store it in U2_c[j2]    
             complex.multiply_complex_tensor_with_real_tensor_in_place(U2_c[J2+1],filters.phi.signal[J2+1],U2_c[J2+1])
+            
+            
             if(doPeriodize) then
                complex.periodize_in_place(U2_c[J2+1],J-J2,mini_batch_ndim,U2_c[J+1])
                fft.my_2D_ifft_complex_to_real_batch(U2_c[J+1],mini_batch_ndim,U2_r[J+1])
@@ -234,6 +253,7 @@ function network:scat(U0_r,doPeriodize)
             else
                -- Compute the complex to real iFFT of U2_c[j2] and store it in U2_r[j2]
                fft.my_2D_ifft_complex_to_real_batch(U2_c[J2+1],mini_batch_ndim,U2_r[J2+1])
+               
                -- Store the downsample in S_r
                S_r:narrow(mini_batch_ndim,count_S_r,1):copy(unpad_output_signal(conv_lib.downsample_2D_inplace(U2_r[J2+1],J-J2,mini_batch_ndim)))
             end            

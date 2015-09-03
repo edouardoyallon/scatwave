@@ -89,7 +89,7 @@ function wrapper_CUDA_fft.my_2D_fft_complex_batch(x,k,backward,out)
    --[[--------------------------------------]]
 
    if(backward) then
-      output:div(x:size(k))   
+      output:div(x:size(k)*x:size(k+1))   
    end
    return output
 end

@@ -79,7 +79,7 @@ function reduced_freq_res(x,res,k)
    end
    local mask = torch.FloatTensor(x:size(),s):fill(1) -- Tensor
       
-   local z=mask:narrow(k,x:size(k)*2^(-res-1)+1,x:size(k)*(1-2^(-res))+1):fill(0)
+   local z=mask:narrow(k,x:size(k)*2^(-res-1)+1,x:size(k)*(1-2^(-res))):fill(0)
    local y=torch.cmul(x,mask)
    return conv_lib.periodize_along_k(y,k,res,1)
 end
@@ -103,9 +103,7 @@ function filters_bank.morlet_filters_bank_2D(U0_dim,J,fft)
          
          local psi = morlet_2d(size_multi_res[1][U0_dim:size()-1], size_multi_res[1][U0_dim:size()], 0.8*2^j, 0.5, 3/4*3.1415/2^j, theta*3.1415/8, 0, 1)
          
-         psi = complex.realize(fft.my_2D_fft_complex(psi))
-         
-         
+         psi = complex.realize(fft.my_2D_fft_complex(psi))         
          filters.psi[i].signal[1]=torch.FloatTensor(psi:storage(),psi:storageOffset(),size_multi_res[1],stride_multi_res[1])
          
          for res=2,j+1 do--res_MAX do

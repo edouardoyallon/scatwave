@@ -21,7 +21,8 @@ function complex.abs_value_inplace(x,out)
    x:cmul(x)
    out:fill(0)
    out:add(x:select(x:nDimension(),1),x:select(x:nDimension(),2))
---   x:narrow(x:nDimension)
+	out:sqrt()
+   --   x:narrow(x:nDimension)
 end
 
 function complex.abs_value(h)
@@ -39,7 +40,7 @@ end
 
 function complex.realize(x)
    assert(tools.is_complex(x),'The number is not complex')
-
+   
    return ((x:select(x:dim(),1)):clone())
 end
 
@@ -47,7 +48,7 @@ function complex.realize_inplace(x)
    assert(tools.is_complex(x),'The number is not complex')
    x:narrow(x:nDimension(),2,1):fill(0)
    return x
-
+   
 end
 
 
@@ -63,8 +64,8 @@ function complex.multiply_complex_tensor(x,y,mini_batch_x)
       end
    end
    y_=myTensor(y:storage(),y:storageOffset(),x:size(),strides) -- hint, set the stride to 0 when you wanna minibatch...
-   
-   assert(tools.are_equal_dimension(x,y_),'Dimensions of x and y differ')      
+      
+      assert(tools.are_equal_dimension(x,y_),'Dimensions of x and y differ')      
    local xr=x:select(x:dim(),1)
    local xi=x:select(x:dim(),2)
    local yr=y_:select(y_:dim(),1)
@@ -73,13 +74,13 @@ function complex.multiply_complex_tensor(x,y,mini_batch_x)
    local z=torch.FloatTensor(x:size()):fill(0)   
    local z_real = z:select(z:dim(), 1)
    local z_imag = z:select(z:dim(), 2)
-      
+   
    
    torch.cmul(z_real, xr, yr)
    z_real:addcmul(-1, xi, yi)   
-   torch.cmul(z_imag, xr, yi)
+      torch.cmul(z_imag, xr, yi)
    z_imag:addcmul(1, xi, yr)      
-
+      
    return z
 end
 
@@ -88,7 +89,7 @@ function complex.multiply_real_and_complex_tensor(x,y)
    
    assert(tools.is_complex(x),'First input must be complex')
    assert(not tools.is_complex(y),'Second input must be real')
-      
+   
    local xr=x:select(x:dim(),1)
    local xi=x:select(x:dim(),2)
    local yr=y
@@ -113,15 +114,17 @@ end
 
 function complex.periodize_in_place(x,ds,batch_size,output)
    assert(tools.is_complex(x),'First input should be complex')   
+      
       output:fill(0)
-
+   
    for l1=1,2^ds do
       for l2=1,2^ds do
-         output:add(x:narrow(batch_size,1+(l1-1)*x:size(batch_size)/2^ds,
-                             x:size(batch_size)/2^ds):narrow(batch_size+1,1+(l2-1)*x:size(batch_size+1)/2^ds,x:size(batch_size+1)/2^ds))
-                             end
+         --print(x:narrow(batch_size,1+(l1-1)*x:size(batch_size)/2^ds,x:size(batch_size)/2^ds):narrow(batch_size+1,1+(l2-1)*x:size(batch_size+1)/2^ds,x:size(batch_size+1)/2^ds):size())
+         output:add(x:narrow(batch_size,1+(l1-1)*x:size(batch_size)/2^ds,x:size(batch_size)/2^ds):narrow(batch_size+1,1+(l2-1)*x:size(batch_size+1)/2^ds,x:size(batch_size+1)/2^ds))
+      end
    end
-   output:divide(2^(2*ds))
+   
+   output:div(2^(2*ds))
 end
 
 
@@ -130,7 +133,7 @@ function complex.multiply_complex_number_and_real_tensor(x,y)
    
    assert(tools.is_complex(x),'First input must be complex')
    assert(not tools.is_complex(y),'Second input must be real')
-      
+   
    local xr=x[1]
    local xi=x[2]
    
@@ -143,10 +146,10 @@ function complex.multiply_complex_number_and_real_tensor(x,y)
    local z=torch.FloatTensor(fs):fill(0)
    local z_real = z:select(z:dim(), 1)
    local z_imag = z:select(z:dim(), 2)
-
+   
    z_real:add(xr,y) 
       z_imag:add(xi,y)
-
+   
    return z
 end
 

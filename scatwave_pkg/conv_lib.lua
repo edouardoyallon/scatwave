@@ -58,10 +58,10 @@ end
 
 
 
-function conv_lib.unpad_signal_along_k(x,original_size_along_k,k,res,myTensor) 
+function conv_lib.unpad_signal_along_k(x,original_size_along_k,k,res) 
    local n_decay=torch.floor((x:size(k)*2^res-original_size_along_k)/2^(res+1))+1   
    local f_size_along_k=1+torch.floor((original_size_along_k-1)/(2^res))
-   local y=myTensor.narrow(x,k,n_decay,f_size_along_k)
+   local y=torch.FloatTensor.narrow(x,k,n_decay,f_size_along_k)
    return y
 end
 

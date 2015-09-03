@@ -28,21 +28,49 @@ end
 
 
 function get_multires_size(s,max_res)
-   local sz=torch.LongTensor(J+1,2)
-   local J=max_res
-   for res=0,J do
-      local N_p=2^J*torch.ceil((N+2*2^J)/2^J)
-      N_p=torch.max(torch.Tensor({{N_p,1}}))/2^res
-      
-      local M_p=2^J*torch.ceil((M+2*2^J)/2^J)/2^res
+   local J=max_res   
+   local sz={}
+   
+   for res=0,J do      
+      local M_p=2^J*torch.ceil((s[s:size()]+2*2^J)/2^J)/2^res
       M_p=torch.max(torch.Tensor({{M_p,1}}))
-      sz[res+1][1]=N_p
-      sz[res+1][2]=M_p
+      local N_p=2^J*torch.ceil((s[s:size()]+2*2^J)/2^J)
+      N_p=torch.max(torch.Tensor({{N_p,1}}))/2^res
+      local s_=torch.LongStorage(s:size())
+      s_:copy(s)
+      
+      s_[s_:size()-1]=M_p
+      s_[s_:size()]=N_p
+      sz[res+1]=s_
    end
+   
    return sz
 end
 
-function reduced_res(x,res,k)
+function get_multires_stride(s,max_res)
+   local J=max_res
+   local sz={}
+   
+   for res=0,J do      
+      local M_p=2^J*torch.ceil((s[s:size()-1]+2*2^J)/2^J)/2^res
+      M_p=torch.max(torch.Tensor({{M_p,1}}))
+      local N_p=2^J*torch.ceil((s[s:size()]+2*2^J)/2^J)
+      N_p=torch.max(torch.Tensor({{N_p,1}}))/2^res
+      local s_=torch.LongStorage(s:size())
+      for l=1,s:size()-2 do
+         s_[l]=0
+      end
+      
+      s_[s_:size()-1]=N_p
+      s_[s_:size()]=1
+      sz[res+1]=s_
+   end
+   
+   return sz
+end
+
+
+function reduced_freq_res(x,res,k)
    local s=x:stride()
    for l=1,#s do
       if not l==k then
@@ -52,31 +80,37 @@ function reduced_res(x,res,k)
    local mask = torch.FloatTensor(x:size(),s):fill(1) -- Tensor
       
    local z=mask:narrow(k,x:size(k)*2^(-res-1)+1,x:size(k)*(1-2^(-res))+1):fill(0)
-   
-   
    local y=torch.cmul(x,mask)
    return conv_lib.periodize_along_k(y,k,res,1)
 end
 
 function filters_bank.morlet_filters_bank_2D(U0_dim,J,fft)
    local filters={}
-   
    local i=1
-   --   local my_fft=scat.fft
-   filters.size_multi_res=get_padding_size(,J) -- min padding should be a power of 2
-      filters.psi={}
+   
+   
+   size_multi_res=get_multires_size(U0_dim,J) -- min padding should be a power of 2
+      filters.psi={}   
+      filters.size_multi_res=size_multi_res
+   
+   stride_multi_res=get_multires_stride(U0_dim,J)
 
-   local res_MAX=J
+
    for j=0,J-1 do
       for theta=1,8 do
          filters.psi[i]={}
          filters.psi[i].signal = {}
          
-         filters.psi[i].signal[1] = morlet_2d(filters.size[1][1], filters.size[1][2], 0.8*2^j, 0.5, 3/4*3.1415/2^j, theta*3.1415/8, 0, 1,my_fft)
-         filters.psi[i].signal[1] = complex.realize(my_fft.my_2D_fft_complex(filters.psi[i].signal[1]))
+         local psi = morlet_2d(size_multi_res[1][U0_dim:size()-1], size_multi_res[1][U0_dim:size()], 0.8*2^j, 0.5, 3/4*3.1415/2^j, theta*3.1415/8, 0, 1)
+         
+         psi = complex.realize(fft.my_2D_fft_complex(psi))
+         
+         
+         filters.psi[i].signal[1]=torch.FloatTensor(psi:storage(),psi:storageOffset(),size_multi_res[1],stride_multi_res[1])
+         
          for res=2,j+1 do--res_MAX do
-            filters.psi[i].signal[res]=reduced_res(reduced_res(filters.psi[i].signal[1],res-1,2),res-1,1)
-               
+            local tmp_psi=reduced_freq_res(reduced_freq_res(psi,res-1,1),res-1,2)
+            filters.psi[i].signal[res]=torch.FloatTensor(tmp_psi:storage(),tmp_psi:storageOffset(),size_multi_res[res],stride_multi_res[res])
          end
          
          filters.psi[i].j=j
@@ -86,12 +120,17 @@ function filters_bank.morlet_filters_bank_2D(U0_dim,J,fft)
    end
    filters.phi={}
    filters.phi.signal={}
-   filters.phi.signal[1]=gabor_2d(filters.size[1][1], filters.size[1][2], 0.8*2^(J-1), 1, 0, 0, 0, 1,my_fft,myTensor)
    
-   filters.phi.signal[1]=complex.realize(my_fft.my_2D_fft_complex(filters.phi.signal[1]))--my_fft.my_fft_complex(my_fft.my_fft_complex(filters.phi.signal[1],1),2)    
-      
-   for res=2,res_MAX+1 do
-      filters.phi.signal[res]=reduced_res(reduced_res(filters.phi.signal[1],res-1,2,myTensor),res-1,1,myTensor)--conv_lib.periodize_along_k(conv_lib.periodize_along_k(filters.phi.signal[1],1,res-1),2,res-1)
+   
+   local phi=gabor_2d(size_multi_res[1][U0_dim:size()-1], size_multi_res[1][U0_dim:size()], 0.8*2^(J-1), 1, 0, 0, 0, 1)
+   phi=complex.realize(fft.my_2D_fft_complex(phi))
+   
+   
+   filters.phi.signal[1]=torch.FloatTensor(phi:storage(),phi:storageOffset(),size_multi_res[1],stride_multi_res[1])
+   
+   for res=2,J+1 do
+      local tmp_phi=reduced_freq_res(reduced_freq_res(phi,res-1,1),res-1,2)
+      filters.phi.signal[res]=torch.FloatTensor(tmp_phi:storage(),tmp_phi:storageOffset(),size_multi_res[res],stride_multi_res[res])--reduced_freq_res(reduced_freq_res(filters.phi.signal[1],res-1,U0_dim:size()-1),res-1,U0_dim:size())
    end
    
    filters.phi.j=J   
@@ -109,12 +148,12 @@ end
 
 function gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift) 
    
-   local wv=myTensor(N,M,2)  
-   local R=myTensor({{torch.cos(theta),-torch.sin(theta)},{torch.sin(theta),torch.cos(theta)}}) -- conversion to the axis..
-   local R_inv=myTensor({{torch.cos(theta),torch.sin(theta)},{-torch.sin(theta),torch.cos(theta)}})
-   local g_modulus=myTensor(M,N)
-   local g_phase=myTensor(M,N,2)
-   local A=myTensor({{1,0},{0,slant^2}})
+   local wv=torch.FloatTensor(N,M,2)  
+   local R=torch.FloatTensor({{torch.cos(theta),-torch.sin(theta)},{torch.sin(theta),torch.cos(theta)}}) -- conversion to the axis..
+   local R_inv=torch.FloatTensor({{torch.cos(theta),torch.sin(theta)},{-torch.sin(theta),torch.cos(theta)}})
+   local g_modulus=torch.FloatTensor(M,N)
+   local g_phase=torch.FloatTensor(M,N,2)
+   local A=torch.FloatTensor({{1,0},{0,slant^2}})
    local tmp=R*A*R_inv/(2*sigma^2)
    local x=torch.linspace(offset+1-(M/2)-1,offset+M-(M/2)-1,M)
    local y=torch.linspace(offset+1-(N/2)-1,offset+N-(N/2)-1,N)
@@ -122,8 +161,8 @@ function gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift)
       
       -- Shift the variable by half of their lenght
    if(fft_shift) then      
-      local x_tmp=myTensor(M)
-      local y_tmp=myTensor(N)
+      local x_tmp=torch.FloatTensor(M)
+      local y_tmp=torch.FloatTensor(N)
       for i=1,M do
          i_=(i-(M/2)-1)%M+1
          x_tmp[i_]=x[i]
@@ -141,7 +180,7 @@ function gabor_2d(M,N,sigma,slant,xi,theta,offset,fft_shift)
       g_phase = xx*xi*torch.cos(theta)+yy*xi*torch.sin(theta)
    g_phase = complex.unit_complex(g_phase)
    
-   wv = complex.multiply_real_and_complex_tensor(g_phase,g_modulus,myTensor)
+   wv = complex.multiply_real_and_complex_tensor(g_phase,g_modulus)
    local    norm_factor=1/(2*3.1415*sigma^2/slant)
    wv:mul(norm_factor)
    

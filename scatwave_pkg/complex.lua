@@ -51,7 +51,7 @@ function complex.realize_inplace(x)
 end
 
 
-function complex.multiply_complex_tensor(x,y,mini_batch_x,myTensor)
+function complex.multiply_complex_tensor(x,y,mini_batch_x)
    assert(tools.is_complex(x),'The number is not complex')
    
    local strides=torch.LongStorage(x:nDimension())
@@ -70,7 +70,7 @@ function complex.multiply_complex_tensor(x,y,mini_batch_x,myTensor)
    local yr=y_:select(y_:dim(),1)
    local yi=y_:select(y_:dim(),2)
    
-   local z=myTensor(x:size()):fill(0)   
+   local z=torch.FloatTensor(x:size()):fill(0)   
    local z_real = z:select(z:dim(), 1)
    local z_imag = z:select(z:dim(), 2)
       
@@ -84,7 +84,7 @@ function complex.multiply_complex_tensor(x,y,mini_batch_x,myTensor)
 end
 
 
-function complex.multiply_real_and_complex_tensor(x,y,myTensor)
+function complex.multiply_real_and_complex_tensor(x,y)
    
    assert(tools.is_complex(x),'First input must be complex')
    assert(not tools.is_complex(y),'Second input must be real')
@@ -93,7 +93,7 @@ function complex.multiply_real_and_complex_tensor(x,y,myTensor)
    local xi=x:select(x:dim(),2)
    local yr=y
    
-   local z=myTensor(x:size()):fill(0)
+   local z=torch.FloatTensor(x:size()):fill(0)
    local z_real = z:select(z:dim(), 1)
    local z_imag = z:select(z:dim(), 2)
    
@@ -121,11 +121,12 @@ function complex.periodize_in_place(x,ds,batch_size,output)
                              x:size(batch_size)/2^ds):narrow(batch_size+1,1+(l2-1)*x:size(batch_size+1)/2^ds,x:size(batch_size+1)/2^ds))
                              end
    end
+   output:divide(2^(2*ds))
 end
 
 
 
-function complex.multiply_complex_number_and_real_tensor(x,y,myTensor)
+function complex.multiply_complex_number_and_real_tensor(x,y)
    
    assert(tools.is_complex(x),'First input must be complex')
    assert(not tools.is_complex(y),'Second input must be real')
@@ -139,7 +140,7 @@ function complex.multiply_complex_number_and_real_tensor(x,y,myTensor)
    end
    fs[y:nDimension()+1]=2
    
-   local z=myTensor(fs):fill(0)
+   local z=torch.FloatTensor(fs):fill(0)
    local z_real = z:select(z:dim(), 1)
    local z_imag = z:select(z:dim(), 2)
 

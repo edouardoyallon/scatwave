@@ -26,7 +26,7 @@ end
 
 
 -- Apply a symetric padding and center the signal-- assuming the signal is real!
-function conv_lib.pad_signal_along_k(x,new_size_along_k,k,myTensor,out)
+function conv_lib.pad_signal_along_k(x,new_size_along_k,k,out)
    local fs=torch.LongStorage(x:nDimension())
    for l=1,x:nDimension() do
       if(l==k) then
@@ -45,7 +45,7 @@ function conv_lib.pad_signal_along_k(x,new_size_along_k,k,myTensor,out)
    end   
    local y
    if(not out) then
-      y=myTensor(fs)
+      y=torch.FloatTensor(fs)
    else
       y=out
    end
@@ -102,8 +102,8 @@ local st=x:stride()
    local s=x:size()
    s[mini_batch]=s[mini_batch]/2^j
    s[1+mini_batch]=s[1+mini_batch]/2^j
-
-   return x:set(x:storage(),x:storageOffset(),s,st)
+   local tmp=torch.Tensor():typeAs(x)
+   return tmp:set(x:storage(),x:storageOffset(),s,st)
 end
 
 return conv_lib

@@ -1,3 +1,10 @@
+--[[
+     ScatWave implementation of Scattering Network
+     Written by Edouard Oyallon
+     Team DATA ENS
+     Copyright 2015
+]]
+
 local complex = require 'scatwave.complex'
 local filters_bank = require 'scatwave.filters_bank'
 local wavelet_transform = require 'scatwave.wavelet_transform'

@@ -1,3 +1,10 @@
+--[[
+     ScatWave implementation of Scattering Network
+     Written by Edouard Oyallon
+     Team DATA ENS
+     Copyright 2015
+]]
+
 local tools={}
 
 function tools.is_complex(x)

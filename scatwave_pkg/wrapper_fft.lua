@@ -1,3 +1,10 @@
+--[[
+     ScatWave implementation of Scattering Network
+     Written by Edouard Oyallon
+     Team DATA ENS
+     Copyright 2015
+]]
+
 local ffi=require 'ffi'
 local fftw = require 'scatwave.engine'
 local fftwf_complex_cast = 'fftwf_complex*'

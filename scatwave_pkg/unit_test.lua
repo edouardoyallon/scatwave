@@ -1,3 +1,10 @@
+--[[
+     ScatWave implementation of Scattering Network
+     Written by Edouard Oyallon
+     Team DATA ENS
+     Copyright 2015
+]]
+
 local unit_test_scatnet={}
 
 require 'cutorch'
@@ -10,7 +17,7 @@ local conv_lib = require 'conv_lib'
 local filters_bank = require 'filters_bank'
 local myTensor=torch.FloatTensor
 
-local TOL=5e-4 -- surprisingly, the tolerance should 10^-5 (6 digits of precision) for float numbers
+local TOL=5e-4 -- surprisingly, the tolerance should work with 10^-5 (6 digits of precision) for float numbers but it does not.
    
 function unit_test_scatnet.complex()
    local alpha=torch.Tensor(1)

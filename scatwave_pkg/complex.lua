@@ -1,3 +1,10 @@
+--[[
+     ScatWave implementation of Scattering Network
+     Written by Edouard Oyallon
+     Team DATA ENS
+     Copyright 2015
+]]
+
 local complex = {}
 require 'torch'
 local tools= require 'scatwave.tools'
@@ -21,7 +28,7 @@ function complex.abs_value_inplace(x,out)
    x:cmul(x)
    out:fill(0)
    out:add(x:select(x:nDimension(),1),x:select(x:nDimension(),2))
-	out:sqrt()
+        out:sqrt()
    --   x:narrow(x:nDimension)
 end
 

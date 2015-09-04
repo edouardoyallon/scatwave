@@ -1,3 +1,10 @@
+--[[
+     ScatWave implementation of Scattering Network
+     Written by Edouard Oyallon
+     Team DATA ENS
+     Copyright 2015
+]]
+
 local wrapper_CUDA_fft={}
 local ffi=require 'ffi'
 local fftwf_complex_cast = 'fftwf_complex*'
@@ -257,22 +264,8 @@ function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k,out)
    local n_el_kp1=torch.floor((x:size(k+1)-1)/2)
    local n_med_kp1=2+torch.floor((x:size(k+1))/2)  
    
-   -- If there is something to fill in ? IS IT ??
    if(n_el>0) then
-    --  local subs_idx=output:narrow(k+1,n_med_kp1,n_el_kp1)
-      
---      local slice2reverse=output:narrow(k+1,2,n_el_kp1)
---      local my_view=torch.CudaTensor(slice2reverse:storage(),slice2reverse:storageOffset(),size_weird,stride_weird)
---      print(torch.squeeze(subs_idx:narrow(subs_idx:nDimension(),1,1)))
---      subs_idx:copy(my_view)
-     --subs_idx:indexCopy(k+1,torch.range(1,n_el_kp1,1):long(),slice2reverse)--     local subs_subs_idx=subs_idx:narrow(k,n_med,n_el)
-      
-  --    local tmp=torch.CudaTensor(subs_subs_idx:size(),subs_subs_idx:stride()) -- hard to avoid, because there are some funny memory conflicts...
---      tmp:indexCopy(k,torch.range(x:size(k)-1,1,-1):long(),subs_subs_idx)
---      subs_subs_idx:copy(tmp)
-      
-      -- conjugate         
---      output:narrow(k+1,n_med_kp1,n_el_kp1):narrow(output:nDimension(),2,1):mul(-1)
+    -- Hopefully torch will be cleaned
    end
 
 

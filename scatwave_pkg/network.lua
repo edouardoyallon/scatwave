@@ -7,7 +7,6 @@
 
 local complex = require 'scatwave.complex'
 local filters_bank = require 'scatwave.filters_bank'
-local wavelet_transform = require 'scatwave.wavelet_transform'
 local conv_lib = require 'scatwave.conv_lib'
 local network = torch.class('network')
 local tools = require 'scatwave.tools'

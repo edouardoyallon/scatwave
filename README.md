@@ -14,7 +14,7 @@ Assuming Torch is already installed on your computer, simply cd in scatwave_pkg,
 
 # Few results...
 
-This version gives comparable results relatively to the version of MATLAB. (78.5% accuracy with a Gaussian SVM, the difference with the CVPR paper comes from the fact the inputs are different(not resizing to 64x64 and renormalized) and that in this version there is no usage of more wavelet per octave) On MATLAB the computation of the feature takes around 30 minutes with the paralleltoolbox, one epoch with this version takes around 100s.
+This version gives comparable results relatively to the version of MATLAB. (78.5% accuracy with a Gaussian SVM, the difference with the CVPR paper comes from the fact the inputs are different(not resizing to 64x64 and renormalized) and that in this version there is no usage of more wavelet per octave) On MATLAB the computation of the feature takes around 30 minutes with the paralleltoolbox, one epoch with this version takes around 100s. Now 86.2% on CIFAR-10. Results on ImageNet soon.
 
 # Usage
 
@@ -28,4 +28,4 @@ scat_coeff = scat(x) -- or scat(x,1)
 
 Mathieux Andreux, Carmine Cella, Vincent Lostanlen, Edouard Oyallon. Contacts: surname.name@ens.fr
 
-Team DATA - Ecole Normale Supérieure
+Team DATA - Ecole Normale SupÃ©rieure

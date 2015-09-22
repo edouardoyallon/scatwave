@@ -178,9 +178,6 @@ function network:scat(U0_r,doPeriodize)
       
       
       if(doPeriodize) then
-         if(j1==1) then
-            DEBUG_=U1_c[1]:clone()
-         end
          if(J1>1) then
             complex.periodize_in_place(U1_c[1],J1,mini_batch_ndim,U1_c[J1+1]) 
          end

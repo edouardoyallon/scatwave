@@ -112,10 +112,24 @@ end
 
 function complex.multiply_complex_tensor_with_real_tensor_in_place(x,y,output)
    assert(tools.is_complex(x),'First input should be complex')
-   
+cutorch.synchronize()   
+   t=t-sys.clock()
    output:narrow(output:nDimension(),1,1):cmul(x:narrow(x:nDimension(),1,1),y)
    output:narrow(output:nDimension(),2,1):cmul(x:narrow(x:nDimension(),2,1),y)
-   
+cutorch.synchronize()   
+   t=t+sys.clock()   
+end
+
+
+function complex.multiply_complex_tensor_with_real_modified_tensor_in_place(x,y,output)
+   assert(tools.is_complex(x),'First input should be complex')
+cutorch.synchronize()   
+      t=t-sys.clock()
+   torch.cmul(output,x,y)
+
+ 
+cutorch.synchronize()   
+   t=t+sys.clock()   
 end
 
 

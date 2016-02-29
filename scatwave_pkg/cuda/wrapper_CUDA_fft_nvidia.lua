@@ -8,6 +8,7 @@
 local wrapper_CUDA_fft={}
 local ffi=require 'ffi'
 local fftwf_complex_cast = 'fftwf_complex*'
+local tools = require 'scatwave.tools'
 
 local cuFFT=require 'scatwave.cuda/engine_CUDA_nvidia'
 
@@ -206,90 +207,97 @@ end
 
 
 function wrapper_CUDA_fft.my_2D_fft_real_batch(x,k,out)   
-   -- Defines a 2D convolution that batches until the k-th dimension
-   
-   local batch=x:nElement()/(x:size(k)*x:size(k+1))
-   local type = cuFFT.R2C
-   
-   
-   
-   local in_data = torch.data(x)
-   local in_data_cast = ffi.cast('float*', in_data)
-   
-   local fs = torch.LongStorage(x:nDimension()+1)
-   for l = 1, x:nDimension() do
-      fs[l] = x:size(l)
-   end
-   
-   
-   fs[x:nDimension()+1] = 2
-   local output 
-   if(not out) then
-      output = torch.CudaTensor(fs):zero()
-   else
-      output=out
-   end
-   local output_data = torch.data(output);
-   local output_data_cast = ffi.cast(fftwf_complex_cast, output_data)
-   
-   
-   
-   -- iFFT if needed, keep in mind that no normalization is performed by FFTW3.0
-   if not backward then
-      sign = cuFFT.FORWARD
-   else
-      sign = cuFFT.INVERSE
-   end
-   
-   -- The plan!
-   
---[[-- SEGFAULT CAN COME FROM THOSE LINES ]]
-   if(wrapper_CUDA_fft.LUT[batch]==nil) then
-      wrapper_CUDA_fft.LUT[batch]={}
-   end
-   if(wrapper_CUDA_fft.LUT[batch][x:size(k)]==nil) then
-      wrapper_CUDA_fft.LUT[batch][x:size(k)]={}
-   end
-   if(wrapper_CUDA_fft.LUT[batch][x:size(k)][type]==nil) then
-      wrapper_CUDA_fft.LUT[batch][x:size(k)][type]=wrapper_CUDA_fft.cache(x,k,type)
-   end
-   local plan_cast=wrapper_CUDA_fft.LUT[batch][x:size(k)][type][0]
-   
-   
-   cuFFT.C['cufftExecR2C'](plan_cast,in_data_cast,output_data_cast)
---[[--------------------------------------]]
-   
-   local n_el=x:size(k)-1
-   local n_med=2
-   
-   local n_el_kp1=torch.floor((x:size(k+1)-1)/2)
-   local n_med_kp1=2+torch.floor((x:size(k+1))/2)  
+   local batch=x:nElement()/(x:size(k)*x:size(k+1))   
       
-   if(n_el>0 and n_el_kp1>0) then
-      local subs_idx=output:narrow(k+1,n_med_kp1,n_el_kp1)
-      subs_idx:indexCopy(k+1,torch.range(n_el_kp1,1,-1):long(),output:narrow(k+1,2,n_el_kp1))
-      local subs_subs_idx=subs_idx:narrow(k,n_med,n_el)
-
-      -- We cache the copy
-      if(wrapper_CUDA_fft.TMP[batch]==nil) then
-         wrapper_CUDA_fft.TMP[batch]={}
-      end
-      if(wrapper_CUDA_fft.TMP[batch][x:size(k)]==nil) then
-         wrapper_CUDA_fft.TMP[batch][x:size(k)]={}
-      end
-      if(wrapper_CUDA_fft.TMP[batch][x:size(k)]) then
-         wrapper_CUDA_fft.TMP[batch][x:size(k)]=torch.CudaTensor(subs_subs_idx:size(),subs_subs_idx:stride())
-      end      
-      local tmp=wrapper_CUDA_fft.TMP[batch][x:size(k)]       -- unavoidable because of the flip.
-
-         tmp:indexCopy(k,torch.range(x:size(k)-1,1,-1):long(),subs_subs_idx)
-      subs_subs_idx:copy(tmp)
-      
-      -- conjugate         
-      output:narrow(k+1,n_med_kp1,n_el_kp1):narrow(output:nDimension(),2,1):mul(-1)
+   if(wrapper_CUDA_fft.TMP[batch]==nil) then
+      wrapper_CUDA_fft.TMP[batch]={}
    end
-
-   return output
+   if(wrapper_CUDA_fft.TMP[batch][x:size(k)]==nil) then
+      wrapper_CUDA_fft.TMP[batch][x:size(k)]={}
+   end
+   if(wrapper_CUDA_fft.TMP[batch][x:size(k)]) then
+      wrapper_CUDA_fft.TMP[batch][x:size(k)]=torch.CudaTensor(tools.concatenateLongStorage(x:size(),torch.LongStorage({2}))):fill(0)
+   end       
+   wrapper_CUDA_fft.TMP[batch][x:size(k)]:select(x:nDimension()+1,1):copy(x)
+   
+   
+   return  wrapper_CUDA_fft.my_2D_fft_complex_batch(   wrapper_CUDA_fft.TMP[batch][x:size(k)],k,nil,out) 
+      
+      -- Defines a 2D convolution that batches until the k-th dimension
+--[[
+     local batch=x:nElement()/(x:size(k)*x:size(k+1))
+     local type = cuFFT.R2C
+     
+     
+     
+     local in_data = torch.data(x)
+     local in_data_cast = ffi.cast('float*', in_data)
+     
+     local fs = torch.LongStorage(x:nDimension()+1)
+     for l = 1, x:nDimension() do
+     fs[l] = x:size(l)
+     end
+     
+     
+     fs[x:nDimension()+1] = 2
+     local output 
+     if(not out) then
+     output = torch.CudaTensor(fs):zero()
+     else
+     output=out
+     end
+     local output_data = torch.data(output);
+     local output_data_cast = ffi.cast(fftwf_complex_cast, output_data)
+     
+     -- The plan!
+     
+     --[[-- SEGFAULT CAN COME FROM THOSE LINES 
+     if(wrapper_CUDA_fft.LUT[batch]==nil) then
+     wrapper_CUDA_fft.LUT[batch]={}
+     end
+     if(wrapper_CUDA_fft.LUT[batch][x:size(k)]==nil) then
+     wrapper_CUDA_fft.LUT[batch][x:size(k)]={}
+     end
+     if(wrapper_CUDA_fft.LUT[batch][x:size(k)][type]==nil) then
+     wrapper_CUDA_fft.LUT[batch][x:size(k)][type]=wrapper_CUDA_fft.cache(x,k,type)
+     end
+     local plan_cast=wrapper_CUDA_fft.LUT[batch][x:size(k)][type][0]
+     
+     
+     cuFFT.C['cufftExecR2C'](plan_cast,in_data_cast,output_data_cast)
+     --[[--------------------------------------
+     
+     local n_el=x:size(k)-1
+     local n_med=2
+     
+     local n_el_kp1=torch.floor((x:size(k+1)-1)/2)
+     local n_med_kp1=2+torch.floor((x:size(k+1))/2)  
+     
+     if(n_el>0 and n_el_kp1>0) then
+     local subs_idx=output:narrow(k+1,n_med_kp1,n_el_kp1)
+     subs_idx:indexCopy(k+1,torch.range(n_el_kp1,1,-1):long(),output:narrow(k+1,2,n_el_kp1))
+     local subs_subs_idx=subs_idx:narrow(k,n_med,n_el)
+     
+     -- We cache the copy
+     if(wrapper_CUDA_fft.TMP[batch]==nil) then
+     wrapper_CUDA_fft.TMP[batch]={}
+     end
+     if(wrapper_CUDA_fft.TMP[batch][x:size(k)]==nil) then
+     wrapper_CUDA_fft.TMP[batch][x:size(k)]={}
+     end
+     if(wrapper_CUDA_fft.TMP[batch][x:size(k)]) then
+     wrapper_CUDA_fft.TMP[batch][x:size(k)]=torch.CudaTensor(subs_subs_idx:size(),subs_subs_idx:stride())
+     end      
+     local tmp=wrapper_CUDA_fft.TMP[batch][x:size(k)]       -- unavoidable because of the flip.
+     
+     tmp:indexCopy(k,torch.range(x:size(k)-1,1,-1):long(),subs_subs_idx)
+     subs_subs_idx:copy(tmp)
+     
+     -- conjugate         
+     output:narrow(k+1,n_med_kp1,n_el_kp1):narrow(output:nDimension(),2,1):mul(-1)
+     end
+  ]]--
+      --return output
 end   
 
 return wrapper_CUDA_fft

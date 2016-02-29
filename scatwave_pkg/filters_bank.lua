@@ -3,10 +3,11 @@
      Written by Edouard Oyallon
      Team DATA ENS
      Copyright 2015
-]]
+  ]]
 
 local conv_lib = require 'scatwave.conv_lib'
 local complex = require 'scatwave.complex'
+local tools = require 'scatwave.tools'
 
 local filters_bank ={}
 
@@ -101,8 +102,8 @@ function filters_bank.morlet_filters_bank_2D(U0_dim,J,fft)
       filters.size_multi_res=size_multi_res
    
    stride_multi_res=get_multires_stride(U0_dim,J)
-
-
+   
+   
    for j=0,J-1 do
       for theta=1,8 do
          filters.psi[i]={}
@@ -111,7 +112,7 @@ function filters_bank.morlet_filters_bank_2D(U0_dim,J,fft)
          local psi = morlet_2d(size_multi_res[1][U0_dim:size()-1], size_multi_res[1][U0_dim:size()], 0.8*2^j, 0.5, 3/4*3.1415/2^j, theta*3.1415/8, 0, 1)
          
          psi = complex.realize(fft.my_2D_fft_complex(psi))         
-         filters.psi[i].signal[1]=torch.FloatTensor(psi:storage(),psi:storageOffset(),size_multi_res[1],stride_multi_res[1])
+            filters.psi[i].signal[1]=torch.FloatTensor(psi:storage(),psi:storageOffset(),size_multi_res[1],stride_multi_res[1])
          
          for res=2,j+1 do--res_MAX do
             local tmp_psi=reduced_freq_res(reduced_freq_res(psi,res-1,1),res-1,2)
@@ -141,6 +142,30 @@ function filters_bank.morlet_filters_bank_2D(U0_dim,J,fft)
    filters.phi.j=J   
       
    return filters 
+end
+
+
+
+function filters_bank.modify(filters)
+local n=   filters.phi.signal[1]:nDimension()
+   for j=1,#filters.psi do
+      for l=1,#filters.psi[j].signal do
+         local tmp=torch.FloatTensor(tools.concatenateLongStorage(filters.psi[j].signal[l]:size(),torch.LongStorage({2}))):fill(0)
+         tmp:select(n+1,1):copy(filters.psi[j].signal[l])
+         tmp:select(n+1,2):copy(filters.psi[j].signal[l])
+         filters.psi[j].signal[l]=tmp
+      end
+   end
+   
+     for l=1,#filters.phi.signal do
+         local tmp=torch.FloatTensor(tools.concatenateLongStorage(filters.phi.signal[l]:size(),torch.LongStorage({2}))):fill(0)
+         tmp:select(n+1,1):copy(filters.phi.signal[l])
+         tmp:select(n+1,2):copy(filters.phi.signal[l])
+         filters.phi.signal[l]=tmp
+      end
+
+   collectgarbage()
+return filters
 end
 
 

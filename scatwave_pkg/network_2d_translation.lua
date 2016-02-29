@@ -25,7 +25,7 @@ function network:__init(J,U0_dim)
    end
    
    self.fft=require 'scatwave.wrapper_fft'         
-      self.filters=filters_bank.morlet_filters_bank_2D(U0_dim,J,self.fft)
+      self.filters=filters_bank.modify(filters_bank.morlet_filters_bank_2D(U0_dim,J,self.fft))
    
    -- Allocate temporary variables
    local size_multi_res=self.filters.size_multi_res   
@@ -148,7 +148,7 @@ function network:scat(U0_r,doPeriodize)
 
    
    -- Compute the multiplication with xf and the LF, store it in U1_c[1]
-   complex.multiply_complex_tensor_with_real_tensor_in_place(U0_c,filters.phi.signal[1],U1_c[1])
+   complex.multiply_complex_tensor_with_real_modified_tensor_in_place(U0_c,filters.phi.signal[1],U1_c[1])
    
    if(doPeriodize) then   
       -- Compute the complex to real iFFT of U1_c[1] and store it in U1_r[1]
@@ -167,7 +167,7 @@ function network:scat(U0_r,doPeriodize)
    for j1=1,#filters.psi do
       -- Compute the multiplication with xf and the filters which is real in Fourier, finally store it in U1_c[1]
       local J1=filters.psi[j1].j
-      complex.multiply_complex_tensor_with_real_tensor_in_place(U0_c,filters.psi[j1].signal[1],U1_c[1])
+      complex.multiply_complex_tensor_with_real_modified_tensor_in_place(U0_c,filters.psi[j1].signal[1],U1_c[1])
       
       
       
@@ -195,7 +195,7 @@ function network:scat(U0_r,doPeriodize)
       
       
       -- Compute the multiplication with U1_c[j1] and the LF, store it in U2_c[j1]
-      complex.multiply_complex_tensor_with_real_tensor_in_place(U1_c[J1+1],filters.phi.signal[J1+1],U2_c[J1+1])
+      complex.multiply_complex_tensor_with_real_modified_tensor_in_place(U1_c[J1+1],filters.phi.signal[J1+1],U2_c[J1+1])
       
       if(doPeriodize) then            
          complex.periodize_in_place(U2_c[J1+1],J-J1,mini_batch_ndim,U1_c[J+1])
@@ -214,7 +214,7 @@ function network:scat(U0_r,doPeriodize)
          local J2=filters.psi[j2].j         
          if (J2>J1) then
             -- Compute the multiplication with U1_c[j1] and the filters, and store it in U2_c[j1]
-            complex.multiply_complex_tensor_with_real_tensor_in_place(U1_c[J1+1],filters.psi[j2].signal[J1+1],U2_c[J1+1])
+            complex.multiply_complex_tensor_with_real_modified_tensor_in_place(U1_c[J1+1],filters.psi[j2].signal[J1+1],U2_c[J1+1])
             
             
             if(doPeriodize) then     
@@ -237,7 +237,7 @@ function network:scat(U0_r,doPeriodize)
             fft.my_2D_fft_real_batch(U2_r[J2+1],mini_batch_ndim,U2_c[J2+1])
             
             -- Compute the multiplication with U2_c[j2] and the LF, store it in U2_c[j2]    
-            complex.multiply_complex_tensor_with_real_tensor_in_place(U2_c[J2+1],filters.phi.signal[J2+1],U2_c[J2+1])
+            complex.multiply_complex_tensor_with_real_modified_tensor_in_place(U2_c[J2+1],filters.phi.signal[J2+1],U2_c[J2+1])
             
             
             if(doPeriodize) then

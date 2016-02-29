@@ -67,9 +67,6 @@ function network:__init(J,U0_dim)
       size_S[#size_S-1] = 1+torch.floor((U0_dim[#U0_dim]-1)/2^J)
    size_S[#size_S] = 1+torch.floor((U0_dim[#U0_dim]-1)/2^J)
    self.S_r = torch.FloatTensor(size_S):fill(0)
-   
-   -- Will be fixed one day...
-   self.TMP_cuda_buggy=allocate_multi_res(1)
 end
 
 
@@ -134,9 +131,7 @@ function network:scat(U0_r,doPeriodize)
    local S_r = self.S_r
    local J = self.J
    
-   
-   -- Just because Torch7.0 is buggy -- reported @ https://github.com/torch/cutorch/issues/36#issuecomment-132765774
-   local TMP= self.TMP_cuda_buggy
+
    
    
    -- Pad the signal along the first, then second dimension. This operation can not be done jointly because Torch does not handle tensor copy in readonly mode
@@ -149,9 +144,8 @@ function network:scat(U0_r,doPeriodize)
    end
    
    -- FFT of the input image
-   -- fft.my_2D_fft_real_batch(U0_r_2,mini_batch_ndim,U0_c)    
-   TMP[1]:narrow(TMP[1]:nDimension(),1,1):copy(U0_r_2)      
-      fft.my_2D_fft_complex_batch(TMP[1],mini_batch_ndim,nil,U0_c)
+   fft.my_2D_fft_real_batch(U0_r_2,mini_batch_ndim,U0_c)    
+
    
    -- Compute the multiplication with xf and the LF, store it in U1_c[1]
    complex.multiply_complex_tensor_with_real_tensor_in_place(U0_c,filters.phi.signal[1],U1_c[1])
@@ -196,9 +190,8 @@ function network:scat(U0_r,doPeriodize)
       complex.abs_value_inplace(U1_c[J1+1],U1_r[J1+1])
       
       -- Compute the Fourier transform and store it in U1_c[j1]
-      --      fft.my_2D_fft_real_batch(U1_r[J1+1],mini_batch,U1_c[J1+1])
-      TMP[J1+1]:narrow(TMP[J1+1]:nDimension(),1,1):copy(U1_r[J1+1])      
-         fft.my_2D_fft_complex_batch(TMP[J1+1],mini_batch_ndim,nil,U1_c[J1+1])
+            fft.my_2D_fft_real_batch(U1_r[J1+1],mini_batch_ndim,U1_c[J1+1])
+
       
       
       -- Compute the multiplication with U1_c[j1] and the LF, store it in U2_c[j1]
@@ -241,9 +234,7 @@ function network:scat(U0_r,doPeriodize)
             
             
             -- Compute the Fourier transform of U2_r[j2] and store it in U2_c[j2]
-            --fft.my_2D_fft_real_batch(U2_r[J2+1],mini_batch_ndim,U2_c[J2+1])
-            TMP[J2+1]:narrow(TMP[J2+1]:nDimension(),1,1):copy(U2_r[J2+1])      
-               fft.my_2D_fft_complex_batch(TMP[J2+1],mini_batch_ndim,nil,U2_c[J2+1])
+            fft.my_2D_fft_real_batch(U2_r[J2+1],mini_batch_ndim,U2_c[J2+1])
             
             -- Compute the multiplication with U2_c[j2] and the LF, store it in U2_c[j2]    
             complex.multiply_complex_tensor_with_real_tensor_in_place(U2_c[J2+1],filters.phi.signal[J2+1],U2_c[J2+1])

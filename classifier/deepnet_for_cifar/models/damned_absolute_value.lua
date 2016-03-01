@@ -31,12 +31,12 @@ local function AbsGroup(nIn, nOut, n, firstSub)
    return group
 end
 
-local n = 2
+local n = 5
 absnet:add(nn.View(243,8,8))
 absnet:add(backend.SpatialConvolution(243, 128, 3,3, 1,1, 1,1))
 absnet:add(nn.SpatialBatchNormalization(128, 1e-3))
+absnet:add(AbsGroup(128,128,n,false))
 absnet:add(AbsGroup(128,64,n,false))
-absnet:add(AbsGroup(64,64,n,false))
 --absnet:add(AbsGroup(64,64,n,true))
 absnet:add(nn.Abs())
 absnet:add(backend.SpatialAveragePooling(8,8,1,1,0,0))

@@ -30,6 +30,27 @@ scat_coeff = scat(x) -- or scat(x,1)<br/>
 You can go to cuda via:<br/>
 scat=scat:cuda()<br/>
 
+# Reproducing the paper
+
+- Data can be downloaded from this page: https://github.com/szagoruyko/wide-residual-networks/blob/master/README.md
+
+- training the network on cifar10:<br/>
+th train_cifar10.lua
+
+- training the network on cifar100:<br/>
+th train_cifar100.lua
+
+- transfering to matlab W1:<br/>
+th get_W1.lua
+
+- analysing the operator:<br/>
+matlab sparsify_W1.m
+
+- retraining the deepnet with a new W1:<br/>
+th retrain_with_fix_W1_pretrained_end_cifar10.lua
+
+- replace the scattering by a deepnet with a pretrained and fixed model:<br/>
+th replace_scattering_fix_end_cifar10.lua
 
 # Contributors
 

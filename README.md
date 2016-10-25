@@ -14,20 +14,20 @@ Assuming Torch is already installed on your computer, simply cd in scatwave_pkg,
 
 # Few results...
 
-ScatWave + one FC = on CIFAR 10
-ScatWave + one FC = on CIFAR 100
-ScatWave + Deepnet = 90.6% on CIFAR10 with
-ScatWave + Deepnet = 90.6% on CIFAR100 with
+ScatWave + one FC = on CIFAR 10__
+ScatWave + one FC = on CIFAR 100__
+ScatWave + Deepnet = 90.6% on CIFAR10 with__
+ScatWave + Deepnet = 90.6% on CIFAR100 with__
 
 # Usage
 
-scatwave = require 'scatwave'
-x=torch.FloatTensor(128,3,32,32)
-scat = scatwave.network.new(3,x:size())
-scat_coeff = scat(x) -- or scat(x,1)
+scatwave = require 'scatwave'__
+x=torch.FloatTensor(128,3,32,32)__
+scat = scatwave.network.new(3,x:size())__
+scat_coeff = scat(x) -- or scat(x,1)__
 
-You can go to cuda via:
-scat=scat:cuda()
+You can go to cuda via:__
+scat=scat:cuda()__
 
 
 # Contributors

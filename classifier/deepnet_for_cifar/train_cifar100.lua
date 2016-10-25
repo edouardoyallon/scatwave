@@ -16,7 +16,7 @@ opt = lapp[[
    --weightDecay              (default 0.0005)      weightDecay
    -m,--momentum              (default 0.9)         momentum
    --epoch_step               (default 30)          epoch step
-   --model                    (default generic_model_cifar10)     model name
+   --model                    (default generic_model_cifar100)     model name
    --max_epoch                (default 300)           maximum number of iterations
 ]]
 
@@ -117,11 +117,11 @@ model:add(dofile('models/'..opt.model..'.lua'):cuda())
 print(model)
 
 print(c.blue '==>' ..' loading data')
-provider = torch.load 'cifar10_original.t7'
+provider = torch.load 'cifar100_original.t7'
 provider.trainData.data = provider.trainData.data:float()
 provider.testData.data = provider.testData.data:float()
 
-confusion = optim.ConfusionMatrix(10)
+confusion = optim.ConfusionMatrix(100)
 
 print('Will save at '..opt.save)
 paths.mkdir(opt.save)

@@ -2,30 +2,37 @@
 
 # ScatWave
 
-ScatWave is a Torch implementation of scattering and other mathematical representations using CUDA libraries, designed for images, sounds, natural language processing and video.
+ScatWave is a Torch implementation of 2D scattering using CUDA libraries, designed for images.
 
 # Disclaimer 
 
-CONFIDENTIAL: DO NOT SHARE THIS SOFTWARE
+This software belongs to the team DATA @ ENS, its main author is Edouard Oyallon.
 
 # How to install
 
 Assuming Torch is already installed on your computer, simply cd in scatwave_pkg, then 'luarocks make'
+Make sure you have FFTW and cuFFT installed and that the libraries are linked to the software.
 
 # Few results...
 
-This version gives comparable results relatively to the version of MATLAB. (78.5% accuracy with a Gaussian SVM, the difference with the CVPR paper comes from the fact the inputs are different(not resizing to 64x64 and renormalized) and that in this version there is no usage of more wavelet per octave) On MATLAB the computation of the feature takes around 30 minutes with the paralleltoolbox, one epoch with this version takes around 100s. Now 86.2% on CIFAR-10. Results on ImageNet soon.
+ScatWave + one FC = on CIFAR 10<br/>
+ScatWave + one FC = on CIFAR 100<br/>
+ScatWave + Deepnet = 90.6% on CIFAR10 with<br/>
+ScatWave + Deepnet = 90.6% on CIFAR100 with<br/>
 
 # Usage
 
-scatwave = require 'scatwave'
-x=torch.FloatTensor(128,3,32,32)
-scat = scatwave.network.new(3,x:size())
-scat_coeff = scat(x) -- or scat(x,1)
+scatwave = require 'scatwave'<br/>
+x=torch.FloatTensor(128,3,32,32)<br/>
+scat = scatwave.network.new(3,x:size())<br/>
+scat_coeff = scat(x) -- or scat(x,1)<br/>
+<br/>
+You can go to cuda via:<br/>
+scat=scat:cuda()<br/>
 
 
 # Contributors
 
-Mathieux Andreux, Carmine Cella, Vincent Lostanlen, Edouard Oyallon. Contacts: surname.name@ens.fr
+Carmine Cella, Edouard Oyallon. Contacts: surname.name@ens.fr
 
 Team DATA - Ecole Normale Supérieure

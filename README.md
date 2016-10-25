@@ -11,6 +11,7 @@ This software belongs to the team DATA @ ENS, its main author is Edouard Oyallon
 # How to install
 
 Assuming Torch is already installed on your computer, simply cd in scatwave_pkg, then 'luarocks make'
+Make sure you have FFTW and cuFFT installed and that the libraries are linked to the software.
 
 # Few results...
 

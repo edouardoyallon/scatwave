@@ -30,6 +30,29 @@ scat_coeff = scat(x) -- or scat(x,1)<br/>
 You can go to cuda via:<br/>
 scat=scat:cuda()<br/>
 
+# Reproducing the paper
+
+- First you need to create the data:
+th provider_cifar10.lua
+th provider_cifar100.lua
+
+- training the network on cifar10:
+th train_cifar10.lua
+
+- training the network on cifar100:
+th train_cifar100.lua
+
+- transfering to matlab W1:
+th get_W1.lua
+
+- analysing the operator:
+matlab sparsify_W1.m
+
+- retraining the deepnet with a new W1:
+th retrain_with_fix_W1_pretrained_end_cifar10.lua
+
+- replace the scattering by a deepnet with a pretrained and fixed model:
+th replace_scattering_fix_end_cifar10.lua
 
 # Contributors
 

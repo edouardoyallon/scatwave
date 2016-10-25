@@ -32,9 +32,7 @@ scat=scat:cuda()<br/>
 
 # Reproducing the paper
 
-- First you need to create the data:<br/>
-th provider_cifar10.lua<br/>
-th provider_cifar100.lua
+- Data can be downloaded from this page: https://github.com/szagoruyko/wide-residual-networks/blob/master/README.md
 
 - training the network on cifar10:<br/>
 th train_cifar10.lua

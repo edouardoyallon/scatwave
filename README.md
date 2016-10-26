@@ -17,8 +17,8 @@ Make sure you have FFTW and cuFFT installed and that the libraries are linked to
 
 ScatWave + one FC = on CIFAR 10<br/>
 ScatWave + one FC = on CIFAR 100<br/>
-ScatWave + Deepnet = 90.6% on CIFAR10 with<br/>
-ScatWave + Deepnet = 90.6% on CIFAR100 with<br/>
+ScatWave + Deepnet = 90.6% on CIFAR10<br/>
+ScatWave + Deepnet = 90.6% on CIFAR100<br/>
 
 # Usage
 
@@ -32,7 +32,8 @@ scat=scat:cuda()<br/>
 
 # Reproducing the paper
 
-- Data can be downloaded from this page: https://github.com/szagoruyko/wide-residual-networks/blob/master/README.md
+- Data can be downloaded from this page: https://github.com/szagoruyko/wide-residual-networks/blob/master/README.md.<br/>
+The whitened versions work quite better and are used in this work.
 
 - training the network on cifar10:<br/>
 th train_cifar10.lua

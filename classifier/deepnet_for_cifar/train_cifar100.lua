@@ -9,7 +9,7 @@ scatwave = require 'scatwave'
 local c = require 'trepl.colorize'
 
 opt = lapp[[
-   -s,--save                  (default "logs")      subdirectory to save logs
+   -s,--save                  (default "logs_cifar100")      subdirectory to save logs
    -b,--batchSize             (default 128)          batch size
    -r,--learningRate          (default 1)        learning rate
    --learningRateDecay        (default 1e-7)      learning rate decay
@@ -117,7 +117,7 @@ model:add(dofile('models/'..opt.model..'.lua'):cuda())
 print(model)
 
 print(c.blue '==>' ..' loading data')
-provider = torch.load 'cifar100_original.t7'
+provider = torch.load 'cifar100_whitened.t7'
 provider.trainData.data = provider.trainData.data:float()
 provider.testData.data = provider.testData.data:float()
 

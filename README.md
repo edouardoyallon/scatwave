@@ -15,10 +15,10 @@ Make sure you have FFTW and cuFFT installed and that the libraries are linked to
 
 # Few results...
 
-ScatWave + one FC = on CIFAR 10<br/>
-ScatWave + one FC = on CIFAR 100<br/>
-ScatWave + Deepnet = 90.6% on CIFAR10<br/>
-ScatWave + Deepnet = 90.6% on CIFAR100<br/>
+ScatWave + one linear projection = on CIFAR 10<br/>
+ScatWave + one linear projection = on CIFAR 100<br/>
+ScatWave + Deepnet = 91.4% on CIFAR10<br/>
+ScatWave + Deepnet = 69.5% on CIFAR100<br/>
 
 # Usage
 

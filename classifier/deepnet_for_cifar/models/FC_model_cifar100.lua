@@ -35,6 +35,7 @@ local function AbsGroup(nIn, nOut, n, firstSub)
    return group
 end
 
+absnet:add(nn.View(243,8,8))
 absnet:add(backend.SpatialAveragePooling(8,8,1,1,0,0))
 absnet:add(nn.Reshape(243))
 absnet:add(nn.Linear(243,100))

@@ -3,7 +3,7 @@ require 'optim'
 require 'cutorch'
 require 'cunn'
 require 'cudnn'
-dofile './provider.lua'
+
 require 'mattorch'
 
 scatwave=require 'scatwave'
@@ -29,8 +29,8 @@ opt = lapp[[
    --learningRateDecay        (default 1e-7)      learning rate decay
    --weightDecay              (default 0.0005)      weightDecay
    -m,--momentum              (default 0.9)         momentum
-   --epoch_step               (default 25)          epoch step
-   --model_pretrain                    (default logs2/model.net)     model name
+   --epoch_step               (default 30)          epoch step
+   --model_pretrain                    (default logs_whitened/model.net)     model name
    --max_epoch                (default 300)           maximum number of iterations
    --loggy                    (default nil)           for batch mode saving log files
 ]]
@@ -94,7 +94,7 @@ print(model_fix)
 print(model)
 
 print(c.blue '==>' ..' loading data')
-provider = torch.load 'provider.t7'
+provider = torch.load 'cifar10_whitened.t7'
 
 confusion = optim.ConfusionMatrix(10)
 

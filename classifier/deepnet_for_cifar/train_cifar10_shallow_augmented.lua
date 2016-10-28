@@ -108,8 +108,31 @@ local bs = input:size(1)
     return self.output
 
 end
+end
 
+g=M.Rotation(20)
 
+do -- data augmentation module
+  local BatchRot,parent = torch.class('nn.BatchRot', 'nn.Module')
+
+  function BatchRot:__init()
+    parent.__init(self)
+    self.train = true
+  end
+
+-- Scales the smaller edge to size
+function BatchRot:updateOutput(input)
+
+local bs = input:size(1)
+
+      for i=1,input:size(1) do
+       input[i]=g(input[i])
+      end
+	
+  self.output = input
+    return self.output
+
+end
 end
 
 
@@ -140,6 +163,7 @@ local model = nn.Sequential()
 local model_aug_data = nn.Sequential()
 model_aug_data:add(nn.BatchFlip():float())
 model_aug_data:add(nn.BatchScale():float())
+model_aug_data:add(nn.BatchRot():float())
 model_aug_data:add(nn.RandomCrop(4):float())
 model_aug_data:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
 

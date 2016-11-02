@@ -129,7 +129,7 @@ end
 -- Random crop with size 8%-100% and aspect ratio 3/4 - 4/3 (Inception-style)
 function M.RandomSizedCrop(size)
    local scale = M.Scale(size)
-   local crop = M.CenterCrop(size)
+--   local crop = M.CenterCrop(size)
 
    return function(input)
       local attempt = 0
@@ -158,7 +158,7 @@ function M.RandomSizedCrop(size)
       until attempt >= 10
 
       -- fallback
-      return crop(scale(input))
+      return (scale(input))
    end
 end
 
@@ -172,9 +172,9 @@ function M.HorizontalFlip(prob)
 end
 
 function M.Rotation(deg)
-   return function(input)
+   return function(input,theta)
       if deg ~= 0 then
-         input = image.rotate(input, (torch.uniform() - 0.5) * deg * math.pi / 180, 'bilinear')
+         input = image.rotate(input, theta* deg * math.pi / 180, 'bilinear')
       end
       return input
    end

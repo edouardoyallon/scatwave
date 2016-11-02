@@ -37,10 +37,10 @@ end
 
 local n = 5
 
-absnet:add(backend.SpatialConvolution(3,64,3,3,1,1,1,1))
-absnet:add(nn.SpatialBatchNormalization(64, 1e-3))--:add(nn.Dropout(0.6))
+absnet:add(backend.SpatialConvolution(3,128,3,3,1,1,1,1))
+absnet:add(nn.SpatialBatchNormalization(128, 1e-3))--:add(nn.Dropout(0.6))
    absnet:add(nn.ReLU())
-absnet:add(backend.SpatialConvolution(64,128,3,3,1,1,1,1))
+absnet:add(backend.SpatialConvolution(128,128,3,3,1,1,1,1))
 absnet:add(nn.SpatialBatchNormalization(128, 1e-3))--:add(nn.Dropout(0.6))
    absnet:add(nn.ReLU())
 absnet:add(backend.SpatialConvolution(128,243,3,3,4,4,1,1))

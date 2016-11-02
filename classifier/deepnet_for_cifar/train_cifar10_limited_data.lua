@@ -9,14 +9,14 @@ scatwave = require 'scatwave'
 local c = require 'trepl.colorize'
 
 opt = lapp[[
-   -s,--save                  (default "logs_cifar10_shallow")      subdirectory to save logs
+   -s,--save                  (default "logs_cifar10")      subdirectory to save logs
    -b,--batchSize             (default 128)          batch size
    -r,--learningRate          (default 1)        learning rate
    --learningRateDecay        (default 1e-7)      learning rate decay
    --weightDecay              (default 0.0005)      weightDecay
    -m,--momentum              (default 0.9)         momentum
    --epoch_step               (default 30)          epoch step
-   --model                    (default FC_model_cifar10)     model name
+   --model                    (default generic_model_cifar10)     model name
    --max_epoch                (default 300)           maximum number of iterations
 ]]
 
@@ -39,14 +39,6 @@ SCAT_test:cuda()
 -----------------------------------------------
 ----
 -----------------------------------------------
-
-
-
-
-
-
-
-
 
 
 
@@ -84,58 +76,6 @@ do -- random crop
 end
 
 
-M=require 'FB_data_augmentation.lua'
-f=M.RandomSizedCrop(32)
-
-do -- data augmentation module
-  local BatchScale,parent = torch.class('nn.BatchScale', 'nn.Module')
-
-  function BatchScale:__init()
-    parent.__init(self)
-    self.train = true
-  end
-
--- Scales the smaller edge to size
-function BatchScale:updateOutput(input)
-
-local bs = input:size(1)
-
-      for i=1,input:size(1) do
-       input[i]=f(input[i])
-      end
-	
-  self.output = input
-    return self.output
-
-end
-end
-
-g=M.Rotation(30)
-
-do -- data augmentation module
-  local BatchRot,parent = torch.class('nn.BatchRot', 'nn.Module')
-
-  function BatchRot:__init()
-    parent.__init(self)
-    self.train = true
-  end
-
--- Scales the smaller edge to size
-function BatchRot:updateOutput(input)
-
-local bs = input:size(1)
-theta=(torch.uniform() - 0.5) 
-      for i=1,input:size(1) do
-       input[i]=g(input[i],theta)
-      end
-	
-  self.output = input
-    return self.output
-
-end
-end
-
-
 
 do -- data augmentation module
   local BatchFlip,parent = torch.class('nn.BatchFlip', 'nn.Module')
@@ -163,10 +103,6 @@ local model = nn.Sequential()
 local model_aug_data = nn.Sequential()
 model_aug_data:add(nn.BatchFlip():float())
 model_aug_data:add(nn.RandomCrop(4):float())
-
---model_aug_data:add(nn.BatchScale():float())
-model_aug_data:add(nn.BatchRot():float())
-
 model_aug_data:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
 
 model:add(dofile('models/'..opt.model..'.lua'):cuda())
@@ -175,6 +111,8 @@ print(model)
 print(c.blue '==>' ..' loading data')
 provider = torch.load 'cifar10_whitened.t7'
 provider.trainData.data = provider.trainData.data:float()
+provider.trainData.data = provider.trainData.data:narrow(1,1,1000)
+provider.trainData.labels = provider.trainData.labels:narrow(1,1,1000)
 provider.testData.data = provider.testData.data:float()
 
 confusion = optim.ConfusionMatrix(10)

@@ -115,7 +115,7 @@ print('selecting W1')
 --model_aug_data:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
 
 --model:add(dofile('models/'..opt.model..'.lua'):cuda())
-model=torch.load('logs_whitened/model.net')
+model=torch.load('logs_cifar10/model.net')
 out=model:get(1):get(2).weight
 mattorch.save('operator_W1.mat',out:double())
 

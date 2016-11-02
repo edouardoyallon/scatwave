@@ -23,14 +23,14 @@ SCAT_test:cuda()
 opt={}
 
 opt = lapp[[
-   -s,--save                  (default "logs_retrain")      subdirectory to save logs
+   -s,--save                  (default "logs_retrain_cifar10")      subdirectory to save logs
    -b,--batchSize             (default 128)          batch size
    -r,--learningRate          (default 1)        learning rate (must be set to the same as before)
    --learningRateDecay        (default 1e-7)      learning rate decay
    --weightDecay              (default 0.0005)      weightDecay
    -m,--momentum              (default 0.9)         momentum
    --epoch_step               (default 30)          epoch step
-   --model_pretrain                    (default logs_whitened/model.net)     model name
+   --model_pretrain                    (default logs_cifar10/model.net)     model name
    --max_epoch                (default 300)           maximum number of iterations
    --loggy                    (default nil)           for batch mode saving log files
 ]]

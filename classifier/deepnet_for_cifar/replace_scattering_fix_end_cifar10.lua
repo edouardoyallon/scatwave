@@ -3,8 +3,9 @@ require 'optim'
 require 'cutorch'
 require 'cunn'
 require 'cudnn'
-dofile './provider.lua'
-require 'mattorch'
+require 'image'
+--dofile './provider.lua'
+--require 'mattorch'
 
 
 local c = require 'trepl.colorize'
@@ -12,15 +13,15 @@ local c = require 'trepl.colorize'
 opt={}
 
 opt = lapp[[
-   -s,--save                  (default logs_fix_end)      subdirectory to save logs
+   -s,--save                  (default logs_cifar10_fix_end)      subdirectory to save logs
    -b,--batchSize             (default 128)          batch size
    -r,--learningRate          (default 1)        learning rate (must be set to the same as before)
    --learningRateDecay        (default 1e-7)      learning rate decay
    --weightDecay              (default 0.0005)      weightDecay
    -m,--momentum              (default 0.9)         momentum
-   --epoch_step               (default 25)          epoch step
-   --model_fix                    (default logs2/model.net)     model name
-   --model_replace_scattering                    (default replace_scattering)     model name
+   --epoch_step               (default 30)          epoch step
+   --model_fix                    (default logs_cifar10/model.net)     model name
+   --model_replace_scattering                    (default replace_scattering_cifar10)     model name
    --max_epoch                (default 300)           maximum number of iterations
    --loggy                    (default nil)           for batch mode saving log files
 ]]
@@ -106,7 +107,7 @@ print(model_fix)
 print(model_replace_scattering)
 
 print(c.blue '==>' ..' loading data')
-provider = torch.load 'provider.t7'
+provider = torch.load 'cifar10_whitened.t7'
 
 confusion = optim.ConfusionMatrix(10)
 

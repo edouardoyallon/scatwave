@@ -40,10 +40,21 @@ local n = 5
 absnet:add(backend.SpatialConvolution(3,128,3,3,1,1,1,1))
 absnet:add(nn.SpatialBatchNormalization(128, 1e-3))--:add(nn.Dropout(0.6))
    absnet:add(nn.ReLU())
+<<<<<<< HEAD
+=======
+absnet:add(backend.SpatialConvolution(64,128,3,3,2,2,1,1))
+absnet:add(nn.SpatialBatchNormalization(128, 1e-3))--:add(nn.Dropout(0.6))
+   absnet:add(nn.ReLU())
+>>>>>>> b3ac10f761f40046325b34318bb112a51d7c95e7
 absnet:add(backend.SpatialConvolution(128,128,3,3,1,1,1,1))
 absnet:add(nn.SpatialBatchNormalization(128, 1e-3))--:add(nn.Dropout(0.6))
    absnet:add(nn.ReLU())
-absnet:add(backend.SpatialConvolution(128,243,3,3,4,4,1,1))
+
+absnet:add(backend.SpatialConvolution(128,256,3,3,1,1,1,1))
+absnet:add(nn.SpatialBatchNormalization(256, 1e-3))--:add(nn.Dropout(0.6))
+   absnet:add(nn.ReLU())
+
+absnet:add(backend.SpatialConvolution(256,243,3,3,2,2,1,1))
 absnet:add(nn.SpatialBatchNormalization(243, 1e-3))--:add(nn.Dropout(0.6))
 absnet:add(nn.ReLU())
 

@@ -61,4 +61,4 @@ Team DATA - Ecole Normale Supérieure
 
 # Acknowledgements
 
-The authors are thankfull to Sergey Zagoruyko for helpfull discussions, codes and enlightments. Many parts of this work are based on codes that he shared, and this had a major impact on this work. We would like to thank also Michael Eickenberg, Mathieu Andreux for helpful discussions.
+The author is thankfull to Sergey Zagoruyko for helpfull discussions, codes and enlightments. Many parts of this work are based on codes that he shared, and this had a major impact on this work. We would like to thank also Michael Eickenberg, Mathieu Andreux for helpful discussions.

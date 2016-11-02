@@ -161,12 +161,19 @@ end
 print(c.blue '==>' ..' configuring model')
 local model = nn.Sequential()
 local model_aug_data = nn.Sequential()
+<<<<<<< HEAD
 model_aug_data:add(nn.BatchFlip():float())
 model_aug_data:add(nn.RandomCrop(4):float())
 
 --model_aug_data:add(nn.BatchScale():float())
 model_aug_data:add(nn.BatchRot():float())
 
+=======
+--model_aug_data:add(nn.BatchFlip():float())
+--model_aug_data:add(nn.BatchScale():float())
+--model_aug_data:add(nn.BatchRot():float())
+--model_aug_data:add(nn.RandomCrop(4):float())
+>>>>>>> b3ac10f761f40046325b34318bb112a51d7c95e7
 model_aug_data:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
 
 model:add(dofile('models/'..opt.model..'.lua'):cuda())

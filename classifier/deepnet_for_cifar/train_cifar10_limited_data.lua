@@ -9,7 +9,7 @@ scatwave = require 'scatwave'
 local c = require 'trepl.colorize'
 
 opt = lapp[[
-   -s,--save                  (default "logs_cifar10")      subdirectory to save logs
+   -s,--save                  (default "logs_cifar10_limited_data")      subdirectory to save logs
    -b,--batchSize             (default 128)          batch size
    -r,--learningRate          (default 1)        learning rate
    --learningRateDecay        (default 1e-7)      learning rate decay
@@ -18,6 +18,8 @@ opt = lapp[[
    --epoch_step               (default 30)          epoch step
    --model                    (default generic_model_cifar10)     model name
    --max_epoch                (default 300)           maximum number of iterations
+   --iter                     (default 0) iter
+   --N                        (default 500) size
 ]]
 
 
@@ -98,11 +100,80 @@ do -- data augmentation module
   end
 end
 
+
+
+M=require 'FB_data_augmentation.lua'
+f=M.RandomSizedCrop(32)
+
+do -- data augmentation module
+  local BatchScale,parent = torch.class('nn.BatchScale', 'nn.Module')
+
+  function BatchScale:__init()
+    parent.__init(self)
+    self.train = true
+  end
+
+-- Scales the smaller edge to size
+function BatchScale:updateOutput(input)
+
+if(self.train) then
+local bs = input:size(1)
+
+local flip_mask = torch.randperm(bs):le(bs/2)
+local pad
+      for i=1,input:size(1) do
+if flip_mask[i] == 1 then
+N= torch.random(33, 41)
+p=torch.floor(1+(N-32)/2)
+       pad=image.scale(input[i], N, N, 'bicubic')
+       input[i]=pad:narrow(3,p,32):narrow(2,p,32)
+      end
+end
+end
+  self.output = input
+    return self.output
+
+end
+end
+
+g=M.Rotation(20)
+
+do -- data augmentation module
+  local BatchRot,parent = torch.class('nn.BatchRot', 'nn.Module')
+
+  function BatchRot:__init()
+    parent.__init(self)
+    self.train = true
+  end
+
+-- Scales the smaller edge to size
+-- Scales the smaller edge to size
+function BatchRot:updateOutput(input)
+
+if(self.train) then
+local bs = input:size(1)
+theta=(torch.uniform() - 0.5)
+      for i=1,input:size(1) do 
+       input[i]=g(input[i],theta)
+      end
+end
+
+  self.output = input
+    return self.output
+
+end
+end 
+
+
+
 print(c.blue '==>' ..' configuring model')
 local model = nn.Sequential()
 local model_aug_data = nn.Sequential()
 model_aug_data:add(nn.BatchFlip():float())
 model_aug_data:add(nn.RandomCrop(4):float())
+--model_aug_data:add(nn.BatchScale():float())
+--model_aug_data:add(nn.BatchRot():float())
+
 model_aug_data:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
 
 model:add(dofile('models/'..opt.model..'.lua'):cuda())
@@ -111,8 +182,8 @@ print(model)
 print(c.blue '==>' ..' loading data')
 provider = torch.load 'cifar10_whitened.t7'
 provider.trainData.data = provider.trainData.data:float()
-provider.trainData.data = provider.trainData.data:narrow(1,1,1000)
-provider.trainData.labels = provider.trainData.labels:narrow(1,1,1000)
+provider.trainData.data = provider.trainData.data:narrow(1,1+(opt.iter-1)*opt.N,opt.N)
+provider.trainData.labels = provider.trainData.labels:narrow(1,1+(opt.iter-1)*opt.N,opt.N)
 provider.testData.data = provider.testData.data:float()
 
 confusion = optim.ConfusionMatrix(10)
@@ -300,7 +371,9 @@ end
 
 for i=1,opt.max_epoch do
   train()
+if i % opt.epoch_step == 0 then
   test()
+end
 end
 
 

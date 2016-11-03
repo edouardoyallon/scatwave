@@ -41,6 +41,7 @@ absnet:add(nn.View(243*8*8))
 absnet:add(nn.Linear(8*8*243,2048))
 absnet:add(nn.ReLU())
 absnet:add(nn.Linear(2048,2048))
+absnet:add(nn.BatchNormalization(2048,1e-3))
 absnet:add(nn.ReLU())
 absnet:add(nn.Linear(2048,10))
 

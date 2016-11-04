@@ -42,8 +42,6 @@ absnet:add(nn.SpatialBatchNormalization(512, 1e-3))--:add(nn.Dropout(0.4))
 absnet:add(nn.ReLU())
 absnet:add(AbsGroup(512,512,n,false))
 absnet:add(AbsGroup(512,128,n,false))
---absnet:add(AbsGroup(64,64,n,true))
-
 absnet:add(backend.SpatialAveragePooling(8,8,1,1,0,0))
 absnet:add(nn.Reshape(128))
 absnet:add(nn.Linear(128,100))

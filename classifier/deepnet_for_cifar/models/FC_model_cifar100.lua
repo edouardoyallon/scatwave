@@ -6,44 +6,13 @@ require('cudnn')
 local backend = cudnn
 local absnet = nn.Sequential()
 
--- a block
-local function AbsBlock(nIn, nOut, subsample)
-   local conv = nn.Sequential()
-   if subsample then      
-      conv:add(backend.SpatialConvolution(nIn, nOut, 3,3, 2,2, 1,1))
-      conv:add(nn.SpatialBatchNormalization(nOut, 1e-3))
-      conv:add(nn.ReLU())      
-   else
-      conv:add(backend.SpatialConvolution(nIn, nOut, 3,3, 1,1, 1,1))
-      conv:add(nn.SpatialBatchNormalization(nOut, 1e-3))
-      conv:add(nn.ReLU())      
-   end   
-   return conv
-end
-
--- a residual group contains n residual blocks
-local function AbsGroup(nIn, nOut, n, firstSub)
-   local group = nn.Sequential()
-   group:add(AbsBlock(nIn, nOut, firstSub))
-   for i = 1, n-1 do
-      if(i%2==1) then
-            group:add(AbsBlock(nOut, nOut, false)):add(nn.Dropout(0.4))
-      else
-            group:add(AbsBlock(nOut, nOut, false))-- 90.4% :add(nn.Dropout(0.4))
-      end
-   end
-   return group
-end
 
 absnet:add(nn.View(243*8*8))
---absnet:add(backend.SpatialAveragePooling(8,8,1,1,0,0))
-
 absnet:add(nn.Linear(8*8*243,2048))
 absnet:add(nn.ReLU())
 absnet:add(nn.Linear(2048,2048))
 absnet:add(nn.ReLU())
 absnet:add(nn.Linear(2048,100))
-
 absnet:add(nn.LogSoftMax())
 
 -- initialization from MSR

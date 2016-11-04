@@ -4,8 +4,6 @@ require 'cutorch'
 require 'cunn'
 require 'cudnn'
 require 'image'
---dofile './provider.lua'
---require 'mattorch'
 
 
 local c = require 'trepl.colorize'
@@ -92,17 +90,7 @@ model_fix = torch.load(opt.model_fix):cuda()
 model_fix:evaluate()
 
 model_replace_scattering = dofile('models/'..opt.model_replace_scattering..'.lua'):cuda()
---model_fix=cudnn.SpatialConvolution(3,3,...)
 
-
-
-
-
---model:add(nn.BatchFlip():float())
---model:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda()) --<- EDOUARD
---model:add(nn.Sequential():add(dofile('models/'..opt.model..'.lua'):cuda())) <-- EDOUARD
-
---model:get(2).updateGradInput = function(input) return end
 print(model_fix)
 print(model_replace_scattering)
 
@@ -168,10 +156,8 @@ function train()
             ------ SCATTERING WAS APPLIED HERE      
             inputs_cuda:copy(model_aug_data:forward(inputs))
             outputs_cuda:copy(model_replace_scattering:forward(inputs_cuda))
-
---            outputs_cuda_fix:copy()
             ------------------------------
-            local outputs = model_fix:forward(outputs_cuda)--model:forward(outputs_cuda_fix)            
+            local outputs = model_fix:forward(outputs_cuda)
             local f = criterion:forward(outputs, targets)
 
             local df_do = criterion:backward(outputs, targets)
@@ -203,18 +189,11 @@ function test(the_end)
    local bs = 125
    for i=1,n,bs do
       inputs=provider.testData.data:narrow(1,i,bs)      
-         ------ SCATTERING IS APPLIED HERE      
-        -- inputs_cuda_test:copy(inputs)
----      outputs_cuda_test:copy(SCAT_test:scat(inputs_cuda_test,1))
-
-         --   outputs_cuda_fix_test:copy(model_fix:forward(outputs_cuda_test))
-         inputs_cuda_test:copy(inputs)
-            outputs_cuda_test:copy(model_replace_scattering:forward(inputs_cuda_test))
-
---            outputs_cuda_fix:copy()
-            ------------------------------
-            local outputs_cuda_fix_test = model_fix:forward(outputs_cuda_test)
+      ------ SCATTERING WAS APPLIED HERE      
+      inputs_cuda_test:copy(inputs)
+      outputs_cuda_test:copy(model_replace_scattering:forward(inputs_cuda_test))
       ------------------------------
+      local outputs_cuda_fix_test = model_fix:forward(outputs_cuda_test)
       _,y = model:forward(outputs_cuda_fix_test):max(2)
       confusion:batchAdd(y,provider.testData.labels:narrow(1,i,bs))
    end
@@ -226,7 +205,6 @@ function test(the_end)
       paths.mkdir(opt.save)
       testLogger:add{train_acc, confusion.totalValid * 100}
       testLogger:style{'-','-'}
-      -- testLogger:plot()
       local file = io.open(opt.save..'/report2.html','w')
       local header = [[
     <!DOCTYPE html>
@@ -252,8 +230,8 @@ function test(the_end)
       os.execute('convert -density 200 '..opt.save..'/test.log.eps '..opt.save..'/test.png')
    end
    
-   -- save model every 25 epochs
-   if epoch % 25 == 0 then
+   -- save model every 30 epochs
+   if epoch % 30 == 0 then
       local filename = paths.concat(opt.save, 'model_half.net')
       print('==> saving model to '..filename)
       torch.save(filename, model)

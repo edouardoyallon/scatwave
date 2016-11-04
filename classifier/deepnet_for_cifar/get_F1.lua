@@ -7,22 +7,6 @@ require 'mattorch'
 scatwave = require 'scatwave'
 
 
-local c = require 'trepl.colorize'
-
-opt = lapp[[
-   -s,--save                  (default "logs2")      subdirectory to save logs
-   -b,--batchSize             (default 128)          batch size
-   -r,--learningRate          (default 1)        learning rate
-   --learningRateDecay        (default 1e-7)      learning rate decay
-   --weightDecay              (default 0.0005)      weightDecay
-   -m,--momentum              (default 0.9)         momentum
-   --epoch_step               (default 25)          epoch step
-   --model                    (default damned_absolute_value)     model name
-   --max_epoch                (default 300)           maximum number of iterations
-]]
-
-
-
 -----------------------------------------------
 ---- SCATTERING
 -----------------------------------------------
@@ -40,18 +24,6 @@ SCAT_test:cuda()
 -----------------------------------------------
 ----
 -----------------------------------------------
-
-
-
-
-
-
-
-
-
-
-
-print(opt)
 
 
 do -- random crop
@@ -108,13 +80,6 @@ do -- data augmentation module
 end
 
 print('selecting W1')
---local model = nn.Sequential()
---local model_aug_data = nn.Sequential()
---model_aug_data:add(nn.BatchFlip():float())
---model_aug_data:add(nn.RandomCrop(4):float())
---model_aug_data:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
-
---model:add(dofile('models/'..opt.model..'.lua'):cuda())
 model=torch.load('logs_cifar10/model.net')
 out=model:get(1):get(2).weight
 mattorch.save('operator_W1.mat',out:double())

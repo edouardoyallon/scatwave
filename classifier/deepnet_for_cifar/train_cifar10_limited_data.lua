@@ -19,7 +19,7 @@ opt = lapp[[
    --model                    (default generic_model_cifar10)     model name
    --max_epoch                (default 300)           maximum number of iterations
    --iter                     (default 0) iter
-   --N                        (default 500) size
+   --N                        (default 1000) size
 ]]
 
 
@@ -102,68 +102,6 @@ end
 
 
 
-M=require 'FB_data_augmentation.lua'
-f=M.RandomSizedCrop(32)
-
-do -- data augmentation module
-  local BatchScale,parent = torch.class('nn.BatchScale', 'nn.Module')
-
-  function BatchScale:__init()
-    parent.__init(self)
-    self.train = true
-  end
-
--- Scales the smaller edge to size
-function BatchScale:updateOutput(input)
-
-if(self.train) then
-local bs = input:size(1)
-
-local flip_mask = torch.randperm(bs):le(bs/2)
-local pad
-      for i=1,input:size(1) do
-if flip_mask[i] == 1 then
-N= torch.random(33, 41)
-p=torch.floor(1+(N-32)/2)
-       pad=image.scale(input[i], N, N, 'bicubic')
-       input[i]=pad:narrow(3,p,32):narrow(2,p,32)
-      end
-end
-end
-  self.output = input
-    return self.output
-
-end
-end
-
-g=M.Rotation(20)
-
-do -- data augmentation module
-  local BatchRot,parent = torch.class('nn.BatchRot', 'nn.Module')
-
-  function BatchRot:__init()
-    parent.__init(self)
-    self.train = true
-  end
-
--- Scales the smaller edge to size
--- Scales the smaller edge to size
-function BatchRot:updateOutput(input)
-
-if(self.train) then
-local bs = input:size(1)
-theta=(torch.uniform() - 0.5)
-      for i=1,input:size(1) do 
-       input[i]=g(input[i],theta)
-      end
-end
-
-  self.output = input
-    return self.output
-
-end
-end 
-
 
 
 print(c.blue '==>' ..' configuring model')
@@ -171,8 +109,6 @@ local model = nn.Sequential()
 local model_aug_data = nn.Sequential()
 model_aug_data:add(nn.BatchFlip():float())
 model_aug_data:add(nn.RandomCrop(4):float())
---model_aug_data:add(nn.BatchScale():float())
---model_aug_data:add(nn.BatchRot():float())
 
 model_aug_data:add(nn.Copy('torch.FloatTensor','torch.CudaTensor'):cuda())
 

@@ -4,8 +4,6 @@ require 'cunn'
 require 'image'
 
 scatwave = require 'scatwave'
-
---dofile './provider.lua'
 local c = require 'trepl.colorize'
 
 opt = lapp[[
@@ -39,15 +37,6 @@ SCAT_test:cuda()
 -----------------------------------------------
 ----
 -----------------------------------------------
-
-
-
-
-
-
-
-
-
 
 
 print(opt)

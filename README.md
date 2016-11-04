@@ -41,14 +41,14 @@ th train_cifar10.lua
 - training the network on cifar100:<br/>
 th train_cifar100.lua
 
-- transfering to matlab W1:<br/>
-th get_W1.lua
+- transfering to matlab F1:<br/>
+th get_F1.lua
 
 - analysing the operator:<br/>
-matlab sparsify_W1.m
+matlab sparsify_F1.m
 
-- retraining the deepnet with a new W1:<br/>
-th retrain_with_fix_W1_pretrained_end_cifar10.lua
+- retraining the deepnet with a new F1:<br/>
+th retrain_with_fix_F1_pretrained_end_cifar10.lua
 
 - replace the scattering by a deepnet with a pretrained and fixed model:<br/>
 th replace_scattering_fix_end_cifar10.lua

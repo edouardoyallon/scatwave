@@ -1,7 +1,4 @@
-function [inewW1]=fourier_to_W1(inewW1,p)
-
-%inewW1=newW1;
-
+function [inewW1]=fourier_to_F1(inewW1,p)
 for c=1:3
     for i=1:4
         if(size(p{c}{i},1)==1)
@@ -25,8 +22,8 @@ end
 
 
 
-inewW1=apply_haar_along_first_inv(inewW1);
+inewW1=apply_DCT_along_first_inv(inewW1);
 inewW1=permute(inewW1,[2 1 3 4]);
-inewW1=apply_haar_along_first_inv(inewW1);
+inewW1=apply_DCT_along_first_inv(inewW1);
 inewW1=ipermute(inewW1,[2 1 3 4]);
 end

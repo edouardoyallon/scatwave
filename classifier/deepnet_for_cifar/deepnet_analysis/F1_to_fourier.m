@@ -1,11 +1,11 @@
 
-function [newW1,p]=W1_to_fourier(filters_1)
+function [newW1,p]=F1_to_fourier(filters_1)
 for c=1:3
     
     start=(c-1)*size(filters_1,3)/3;
-    % x*phi
+% x*phi
     p{c}{1}=start+1;
-    % |x*psi_1|*phi
+% |x*psi_1|*phi
         for theta1=1:8
             p{c}{2}(theta1)=start+1+1+(theta1-1)*9;
         end
@@ -30,21 +30,12 @@ for c=1:3
         
 end
 
-%     l=[];
-% for c=1:3
-%     for i=1:4
-%     l=[l;p{c}{i}(:)];
-%     end
-% end
-
-%for c=1:3
-%    for l=1:4
 newW1=filters_1;
 
 % Put it in Haar
-newW1=apply_haar_along_first(newW1);
+newW1=apply_DCT_along_first(newW1);
 newW1=permute(newW1,[2 1 3 4]);
-newW1=apply_haar_along_first(newW1);
+newW1=apply_DCT_along_first(newW1);
 newW1=ipermute(newW1,[2 1 3 4]);
 for c=1:3
     for i=1:4

@@ -15,8 +15,8 @@ Make sure you have FFTW and cuFFT installed and that the libraries are linked to
 
 # Few results...
 
-ScatWave + one linear projection = on CIFAR 10<br/>
-ScatWave + one linear projection = on CIFAR 100<br/>
+ScatWave + 3FC = 83.0 on CIFAR 10<br/>
+ScatWave + 3FC = 56.7 on CIFAR 100<br/>
 ScatWave + Deepnet = 91.4% on CIFAR10<br/>
 ScatWave + Deepnet = 69.5% on CIFAR100<br/>
 
@@ -55,10 +55,10 @@ th replace_scattering_fix_end_cifar10.lua
 
 # Contributors
 
-Carmine Cella, Edouard Oyallon. Contacts: surname.name@ens.fr
+Edouard Oyallon. Contacts: surname.name@ens.fr
 
 Team DATA - Ecole Normale Supérieure
 
 # Acknowledgements
 
-The author is thankfull to Sergey Zagoruyko for helpfull discussions, codes and enlightments. Many parts of this work are based on codes that he shared, and this had a major impact on this work. We would like to thank also Michael Eickenberg, Mathieu Andreux for helpful discussions.
+The author is thankfull to Sergey Zagoruyko for helpfull discussions, codes and enlightments. Many parts of this work are based on codes that he shared, and this had a major impact on this work. I would like to thank also Mathieu Andreux, Eugene Bellolevsky, Carmine Cella, Michael Eickenberg for helpful discussions.

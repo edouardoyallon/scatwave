@@ -55,10 +55,11 @@ th replace_scattering_fix_end_cifar10.lua
 
 # Contributors
 
-Edouard Oyallon. Contacts: surname.name@ens.fr
+Edouard Oyallon. Contacts: firstname.lastname@ens.fr
 
 Team DATA - Ecole Normale Supérieure
 
 # Acknowledgements
 
-The author is thankfull to Sergey Zagoruyko for helpfull discussions, codes and enlightments. Many parts of this work are based on codes that he shared, and this had a major impact on this work. I would like to thank also Mathieu Andreux, Eugene Bellolevsky, Carmine Cella, Michael Eickenberg for helpful discussions.
+The author is thankful to Sergey Zagoruyko for helpfull discussions, codes and enlightments. Many parts of this work are based on codes that he shared, and this had a major impact on this work. I would like to thank also Mathieu Andreux, 
+Eugene Belilovsky, Carmine Cella, Michael Eickenberg for helpful discussions.

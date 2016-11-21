@@ -19,18 +19,18 @@ opt = lapp[[
 ]]
 
 
-
+args={}
 -----------------------------------------------
 ---- SCATTERING
 -----------------------------------------------
 
 J=2
-args={}
-SCAT=scatwave.network.new(2,torch.LongStorage({128,3,32,32}))
+
+SCAT=scatwave.network.new(J,torch.LongStorage({128,3,32,32}))
 SCAT:cuda()
 
 
-SCAT_test=scatwave.network.new(2,torch.LongStorage({125,3,32,32}))
+SCAT_test=scatwave.network.new(J,torch.LongStorage({125,3,32,32}))
 SCAT_test:cuda()
 
 

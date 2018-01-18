@@ -1,3 +1,8 @@
+THIS VERSION OF THE SCATTERING IS OBSOLETE
+
+Please check out our new version (pytorch): https://github.com/edouardoyallon/pyscatwave - any version of the Scattering Transform in lua can be considered as obsolete.
+
+
 ![Logo](https://github.com/edouardoyallon/scatwave/blob/master/logo.png)
 
 # ScatWave
